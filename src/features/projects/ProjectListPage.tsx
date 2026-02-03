@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGuideStore } from '@/store'
 import { Button } from '@/components/ui/Button'
-import { downloadBackup } from '@/lib/backup'
+import { downloadBackup, parseBackupFile } from '@/lib/backup'
 
 /** 별 아이콘 (북마크 가이드 토글) */
 function StarIcon({ filled, onClick }: { filled: boolean; onClick: (e: React.MouseEvent) => void }) {
@@ -34,6 +34,8 @@ export function ProjectListPage() {
   const [newParticipant, setNewParticipant] = useState('')
   const [selectedGuideIds, setSelectedGuideIds] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const backupInputRef = useRef<HTMLInputElement>(null)
+  const restoreFromBackup = useGuideStore((s) => s.restoreFromBackup)
 
   function toggleGuide(guideId: string) {
     setSelectedGuideIds((prev) =>
@@ -130,11 +132,43 @@ export function ProjectListPage() {
     navigate('/projects')
   }
 
+  async function handleImportBackup(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      const text = await file.text()
+      const payload = parseBackupFile(text)
+      if (!payload) {
+        alert('올바른 백업 파일이 아닙니다.')
+        return
+      }
+      restoreFromBackup(payload)
+      alert(`가져오기 완료. 프로젝트 ${payload.projects.length}개가 등록되었습니다.`)
+    } catch (err) {
+      console.error(err)
+      alert('파일을 읽는 중 오류가 발생했습니다.')
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', padding: 48, background: 'var(--color-bg)' }}>
       <header style={{ marginBottom: 32, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700 }}>프로젝트</h1>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Button
+            variant="secondary"
+            onClick={() => backupInputRef.current?.click()}
+          >
+            데이터 가져오기
+          </Button>
+          <input
+            ref={backupInputRef}
+            type="file"
+            accept=".json,application/json"
+            style={{ display: 'none' }}
+            onChange={handleImportBackup}
+          />
           <Button
             variant="secondary"
             onClick={() => downloadBackup(projects)}

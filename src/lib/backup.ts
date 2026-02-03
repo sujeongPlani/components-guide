@@ -24,3 +24,20 @@ export function downloadBackup(projects: Project[]): void {
   a.click()
   URL.revokeObjectURL(url)
 }
+
+/** 백업 JSON 문자열 파싱. 형식이 맞으면 payload 반환, 아니면 null */
+export function parseBackupFile(json: string): BackupPayload | null {
+  try {
+    const data = JSON.parse(json) as unknown
+    if (data == null || typeof data !== 'object') return null
+    const obj = data as Record<string, unknown>
+    if (!Array.isArray(obj.projects)) return null
+    return {
+      version: typeof obj.version === 'number' ? obj.version : BACKUP_VERSION,
+      exportedAt: typeof obj.exportedAt === 'string' ? obj.exportedAt : new Date().toISOString(),
+      projects: obj.projects,
+    }
+  } catch {
+    return null
+  }
+}

@@ -259,6 +259,8 @@ interface GuideStore {
   updateCommonAsset: (projectId: string, assetId: string, partial: Partial<CommonAsset>) => void
   /** 공통 리소스(CSS/JS/이미지)를 파일트리에 반영. 파일 구조 페이지 진입 시·기존 데이터 동기화용 */
   syncCommonResourcesToFileTree: (projectId: string) => void
+  /** 데이터 가져오기: 백업 JSON의 projects를 정규화 후 스토어에 반영 */
+  restoreFromBackup: (payload: { projects?: unknown[] }) => void
 }
 
 export const useGuideStore = create<GuideStore>()(
@@ -344,6 +346,35 @@ export const useGuideStore = create<GuideStore>()(
 
       removeProject: (id) =>
         set((state) => ({ projects: state.projects.filter((p) => p.id !== id) })),
+
+      /** 데이터 가져오기: 백업 JSON의 projects를 정규화 후 스토어에 반영 */
+      restoreFromBackup: (payload: { projects?: unknown[] }) => {
+        const raw = Array.isArray(payload?.projects) ? payload.projects : []
+        const projects: Project[] = raw.map((proj) => {
+          const base = { ...(typeof proj === 'object' && proj !== null ? proj : {}) } as Project
+          const withComponents = Array.isArray(base.components)
+            ? { ...base, components: base.components.map((c) => normalizeComponentItem(c)) }
+            : { ...base, components: [] }
+          const withCategories = Array.isArray(withComponents.categories) && withComponents.categories.length > 0
+            ? withComponents
+            : { ...withComponents, categories: [...DEFAULT_CATEGORIES] }
+          const withCommonFiles = Array.isArray(withCategories.commonFiles) ? withCategories : { ...withCategories, commonFiles: [] }
+          const withCommonAssets = Array.isArray(withCommonFiles.commonAssets) ? withCommonFiles : { ...withCommonFiles, commonAssets: [] }
+          const withFileTree =
+            !withCommonAssets.fileTree || withCommonAssets.fileTree.length === 0
+              ? { ...withCommonAssets, fileTree: createDefaultFileTree() }
+              : withCommonAssets
+          const withBookmark =
+            typeof (withFileTree as Project).isBookmarkGuide === 'boolean'
+              ? withFileTree
+              : { ...withFileTree, isBookmarkGuide: false }
+          return withBookmark
+        })
+        const withKrds = projects.some((p) => p.name === 'KRDS')
+          ? projects
+          : [...projects, getKrdsSeedProject()]
+        set({ projects: withKrds })
+      },
 
       updateProjectName: (id, name) =>
         set((state) => ({
