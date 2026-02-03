@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGuideStore } from '@/store'
 import { Button } from '@/components/ui/Button'
+import { downloadBackup } from '@/lib/backup'
 
 /** 별 아이콘 (북마크 가이드 토글) */
 function StarIcon({ filled, onClick }: { filled: boolean; onClick: (e: React.MouseEvent) => void }) {
@@ -134,6 +135,12 @@ export function ProjectListPage() {
       <header style={{ marginBottom: 32, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700 }}>프로젝트</h1>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Button
+            variant="secondary"
+            onClick={() => downloadBackup(projects)}
+          >
+            데이터 내보내기
+          </Button>
           <Button
             variant="primary"
             onClick={() => {

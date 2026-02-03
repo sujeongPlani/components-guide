@@ -97,11 +97,16 @@ function createSafeStorage(): { getItem: (name: string) => string | null; setIte
           }
         }
         localStorage.setItem(name, value)
-      } catch (e) {
+      } catch {
         try {
           localStorage.setItem(name, value)
-        } catch {
-          /* quota 등 저장 실패 시 덮어쓰지 않음 */
+        } catch (err) {
+          const isQuota = err instanceof DOMException && (err.name === 'QuotaExceededError' || err.code === 22)
+          window.dispatchEvent(
+            new CustomEvent('live-guide-storage-failed', {
+              detail: { reason: isQuota ? 'quota' : 'unknown', error: err },
+            })
+          )
         }
       }
     },
