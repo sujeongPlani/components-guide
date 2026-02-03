@@ -8,6 +8,7 @@ import { DEFAULT_CATEGORIES } from '@/store/types'
 import mixinCss from './krds/mixin.css?raw'
 import krdsTokensCss from './krds/krds_tokens.css?raw'
 import krdsCss from './krds/krds.css?raw'
+import krdsMinCss from './krds/krds.min.css?raw'
 import krdsRespondCss from './krds/krds_respond.css?raw'
 import componentCss from './krds/component.css?raw'
 import patternJs from './krds/pattern.js?raw'
@@ -44,6 +45,7 @@ export function getKrdsSeedProject(): Project {
     { id: uuid(), name: 'mixin.css', content: mixinCss as string, type: 'css' },
     { id: uuid(), name: 'krds_tokens.css', content: krdsTokensCss as string, type: 'css' },
     { id: uuid(), name: 'krds.css', content: krdsCss as string, type: 'css' },
+    { id: uuid(), name: 'krds.min.css', content: krdsMinCss as string, type: 'css' },
     { id: uuid(), name: 'krds_respond.css', content: krdsRespondCss as string, type: 'css' },
     { id: uuid(), name: 'component.css', content: componentCss as string, type: 'css' },
     { id: uuid(), name: 'pattern.js', content: patternJs as string, type: 'js' },
@@ -79,6 +81,7 @@ export function getKrdsSeedProject(): Project {
       fileNode('mixin.css', 'file'),
       fileNode('krds_tokens.css', 'file'),
       fileNode('krds.css', 'file'),
+      fileNode('krds.min.css', 'file'),
       fileNode('krds_respond.css', 'file'),
       fileNode('component.css', 'file'),
     ]),

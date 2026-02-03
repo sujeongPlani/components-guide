@@ -748,6 +748,29 @@ export const useGuideStore = create<GuideStore>()(
                 : { ...withFileTree, isBookmarkGuide: false }
             return withBookmark
           })
+          // 기존 KRDS에 krds.min.css 없으면 시드에서 추가 (다른 기기에서 열어도 동일하게)
+          projects = projects.map((proj) => {
+            if (proj.name !== 'KRDS') return proj
+            if (proj.commonFiles.some((f) => f.name === 'krds.min.css')) return proj
+            const seed = getKrdsSeedProject()
+            const seedFile = seed.commonFiles.find((f) => f.name === 'krds.min.css')
+            if (!seedFile) return proj
+            const newFile = { ...seedFile, id: crypto.randomUUID() }
+            const seedCss = seed.fileTree?.find((n) => n.name === 'css')
+            const seedMinNode = seedCss?.children?.find((n) => n.name === 'krds.min.css')
+            const newFileTree = proj.fileTree?.map((node) => {
+              if (node.name !== 'css' || !node.children) return node
+              const idx = node.children.findIndex((c) => c.name === 'krds.css')
+              const insertAt = idx >= 0 ? idx + 1 : node.children.length
+              const newNode = seedMinNode
+                ? { ...seedMinNode, id: crypto.randomUUID() }
+                : { id: crypto.randomUUID(), name: 'krds.min.css', type: 'file' as const }
+              const children = [...node.children]
+              children.splice(insertAt, 0, newNode)
+              return { ...node, children }
+            }) ?? proj.fileTree
+            return { ...proj, commonFiles: [...proj.commonFiles, newFile], fileTree: newFileTree ?? proj.fileTree }
+          })
         } else if (Array.isArray(p?.components) || Array.isArray(p?.commonFiles) || Array.isArray(p?.commonAssets)) {
           projects = [
             {
