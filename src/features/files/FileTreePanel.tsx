@@ -142,7 +142,7 @@ function TreeBranch({ row, isLast }: { row: FlatRow; isLast: boolean }) {
 function TreeRow({
   row,
   isLastAmongSiblings,
-  tree,
+  tree: _tree,
   selectedId,
   expandedIds,
   onSelect,
@@ -150,7 +150,7 @@ function TreeRow({
   onAddFolder,
   onAddFile,
   onRemove,
-  setExpandedIds,
+  setExpandedIds: _setExpandedIds,
 }: {
   row: FlatRow
   isLastAmongSiblings: boolean
@@ -164,7 +164,7 @@ function TreeRow({
   onRemove: (nodeId: string) => void
   setExpandedIds: (fn: (prev: Set<string>) => Set<string>) => void
 }) {
-  const { node, depth, parentId, indexInParent } = row
+  const { node, parentId, indexInParent } = row
   const isFolder = node.type === 'folder'
   const hasChildren = (node.children?.length ?? 0) > 0
   const isExpanded = expandedIds.has(node.id)
@@ -287,7 +287,7 @@ function ContextMenu({
   x,
   y,
   onClose,
-  isFolder,
+  isFolder: _isFolder,
   canDelete,
   onAddFolder,
   onAddFile,
@@ -378,7 +378,7 @@ export function FileTreePanel({
     const { active, over } = e
     if (!over?.data.current) return
     const draggedId = active.id as string
-    const { parentId, index, isFolder, nodeId } = over.data.current as {
+    const { parentId, index, nodeId } = over.data.current as {
       parentId: string | null
       index: number
       isFolder: boolean

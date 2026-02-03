@@ -13,7 +13,6 @@ export function EditorPage() {
   const { projectId, id } = useParams<{ projectId: string; id: string }>()
   const navigate = useNavigate()
   const project = useGuideStore((s) => (projectId ? s.getProject(projectId) : undefined))
-  const components = project?.components ?? []
   const categories = project?.categories ?? []
   const addComponent = useGuideStore((s) => s.addComponent)
   const updateComponent = useGuideStore((s) => s.updateComponent)

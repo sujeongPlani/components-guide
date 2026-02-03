@@ -144,12 +144,14 @@ export function FileStructurePage() {
   }
 
   function handleAddFolder() {
+    if (!projectId) return
     const name = newFolderName.trim() || '새 폴더'
     addFileNode(projectId, parentIdForAdd, { name, type: 'folder' })
     setNewFolderName('')
   }
 
   function handleAddFile() {
+    if (!projectId) return
     const name = newFileName.trim() || '새 파일'
     addFileNode(projectId, parentIdForAdd, { name, type: 'file' })
     setNewFileName('')
@@ -167,12 +169,13 @@ export function FileStructurePage() {
   }
 
   function handleRemove() {
-    if (!selectedId || !canDeleteSelected) return
+    if (!projectId || !selectedId || !canDeleteSelected) return
     if (!window.confirm('선택한 항목을 삭제할까요? 삭제된 항목은 복구할 수 없습니다.')) return
     if (removeFileNode(projectId, selectedId)) setSelectedId(null)
   }
 
   function handleRemoveNode(nodeId: string) {
+    if (!projectId) return
     const name = getNodeNameById(fileTree, nodeId) || '이 항목'
     if (!window.confirm(`"${name}"을(를) 삭제할까요? 삭제된 항목은 복구할 수 없습니다.`)) return
     if (removeFileNode(projectId, nodeId) && selectedId === nodeId) setSelectedId(null)
@@ -183,6 +186,7 @@ export function FileStructurePage() {
     targetParentId: string | null,
     targetIndex: number
   ): boolean {
+    if (!projectId) return false
     return moveFileNodeStore(projectId, nodeId, targetParentId, targetIndex)
   }
 

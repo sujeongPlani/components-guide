@@ -99,7 +99,7 @@ export function getParentIdAndIndex(
   nodes: FileNode[],
   nodeId: string,
   parentId: string | null = null,
-  index: number = 0
+  _index: number = 0
 ): { parentId: string | null; index: number } | null {
   for (let i = 0; i < nodes.length; i++) {
     if (nodes[i].id === nodeId) return { parentId, index: i }

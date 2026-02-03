@@ -4,6 +4,7 @@ node_modules/
 # Build output
 dist/
 dist-ssr/
+*.tsbuildinfo
 
 # Local env (비밀/호스트 정보 포함 가능)
 .env
