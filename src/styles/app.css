@@ -1,0 +1,2002 @@
+/**
+ * 앱 UI 전용 스타일 (lg- 접두사)
+ * 기능별 레이아웃·스타일을 정의합니다.
+ */
+
+/* ========== 1. 공통 레이아웃 (MainLayout) ========== */
+/* 공유 페이지 라우트: 뷰포트 전체 높이 보장 (기본 앱과 동일한 레이아웃) */
+.lg-share-route-root {
+  height: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.lg-share-route-root .lg-root {
+  flex: 1;
+  min-height: 0;
+}
+
+.lg-root {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  min-height: 100vh;
+}
+
+.lg-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ========== 2. 가이드 홈 (GuidePage → ComponentGrid) ========== */
+.lg-guide-fill {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* .lg-main 안쪽 레이아웃 전환 (아이콘, active로 현재 모드 표시) */
+.lg-guide-layout-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 24px 8px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.lg-guide-layout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.lg-guide-layout-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.lg-guide-layout-btn--active {
+  border-color: var(--color-primary);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--color-primary);
+}
+
+/* 로딩 스피너 (회전 애니메이션) */
+@keyframes lg-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.lg-loading-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--lg-spinner-size, 32px);
+  height: var(--lg-spinner-size, 32px);
+  color: var(--lg-spinner-color, var(--color-primary));
+}
+
+.lg-loading-spinner svg {
+  width: 100%;
+  height: 100%;
+  animation: lg-spin 0.8s linear infinite;
+}
+
+.lg-grid-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 15px;
+}
+
+.lg-grid-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px;
+}
+
+.lg-grid-section {
+  margin-bottom: 32px;
+}
+
+.lg-grid-section-title {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.lg-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+/* ========== 3. 컴포넌트 카드 (ComponentCard) ========== */
+.lg-card-wrap {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.lg-card-head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.lg-card-head-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.lg-card-head-desc {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+/* 카드형: 미리보기 영역 고정 높이, 스크롤 가능. 집중형은 아래에서 overflow: visible 등으로 덮음 */
+.lg-card-preview {
+  padding: 16px;
+  min-height: 80px;
+  max-height: 360px;
+  overflow: auto;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lg-card-preview-placeholder {
+  width: 100%;
+  min-height: 120px;
+  background: linear-gradient(90deg, var(--color-border) 25%, var(--color-bg) 50%, var(--color-border) 75%);
+  background-size: 200% 100%;
+  animation: lg-skeleton-shine 1.2s ease-in-out infinite;
+  border-radius: var(--radius);
+}
+
+@keyframes lg-skeleton-shine {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.lg-card-preview iframe {
+  width: 100%;
+  min-height: 60px;
+  border: none;
+}
+
+.lg-card-foot {
+  padding: 8px 16px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.lg-card-edit-btn {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-primary);
+  font-family: inherit;
+}
+
+.lg-card-delete-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  font-family: inherit;
+}
+
+.lg-card-delete-btn:hover {
+  color: var(--color-danger, #dc2626);
+}
+
+/* ---------- 집중형 레이아웃 (가이드 문서 보기 경험) ---------- */
+.lg-grid-scroll--layout-focus {
+  padding: 32px 40px 48px;
+  max-width: 100%;
+  background: #fff;
+}
+
+.lg-grid-scroll--layout-focus .lg-grid-section {
+  margin-bottom: 48px;
+}
+
+.lg-grid-scroll--layout-focus .lg-grid-section-title {
+  margin: 0 0 24px;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.lg-grid-scroll--layout-focus .lg-grid-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-left:2rem;
+  border-left: 1px dashed #bbb;
+}
+
+.lg-grid-scroll--layout-focus .lg-card-wrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  padding: 1rem 0 2rem;
+  border-bottom: 1px solid var(--color-border);
+  position: relative;
+}
+
+.lg-grid-scroll--layout-focus .lg-card-wrap:last-child {
+  border-bottom: none;
+}
+
+.lg-grid-scroll--layout-focus .lg-card-head {
+  padding: 0 140px 16px 0;
+  border-bottom: none;
+}
+
+.lg-grid-scroll--layout-focus .lg-card-head-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.lg-grid-scroll--layout-focus .lg-card-head-desc {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.lg-grid-scroll--layout-focus .lg-card-preview {
+  padding: 24px;
+  min-height: 80px;
+  max-height: none;
+  overflow: visible;
+  background: #fff;
+  border-radius: var(--radius);
+}
+
+/* iframe 높이는 JS로 내용 scrollHeight에 맞춰 인라인 설정되므로 내부 스크롤 없음 */
+.lg-grid-scroll--layout-focus .lg-card-preview iframe {
+  min-height: 80px;
+  display: block;
+  overflow: hidden;
+}
+
+/* 플로팅 툴바: 우측 상단, 기본 숨김, hover/focus 시 노출 */
+.lg-grid-scroll--layout-focus .lg-card-foot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: auto;
+  padding: 8px 12px;
+  border: none;
+  border-top: none;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.lg-grid-scroll--layout-focus .lg-card-wrap:hover .lg-card-foot,
+.lg-grid-scroll--layout-focus .lg-card-wrap:focus-within .lg-card-foot {
+  opacity: 1;
+  visibility: visible;
+}
+
+.lg-grid-scroll--layout-focus .lg-card-edit-btn {
+  margin-left: auto;
+}
+
+.lg-grid-scroll--layout-focus .lg-card-delete-btn:hover {
+  color: var(--color-danger, #dc2626);
+}
+
+/* 집중형: 단일 프리뷰 + 컴포넌트 목록 */
+.lg-focus-single-preview {
+  margin-bottom: 32px;
+}
+
+.lg-focus-list .lg-grid-section-title {
+  margin-bottom: 16px;
+}
+
+.lg-focus-list-cat {
+  margin: 16px 0 8px;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.lg-focus-list-cat:first-child {
+  margin-top: 0;
+}
+
+.lg-focus-list-row {
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.lg-focus-list-row:hover {
+  background: var(--color-bg) !important;
+}
+
+.lg-focus-list-row--selected {
+  border-color: var(--color-primary) !important;
+}
+
+/* ========== 4. 에디터 (EditorPage) ========== */
+.lg-editor-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.lg-editor-head {
+  flex-shrink: 0;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.lg-editor-head-input {
+  width: 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+
+.lg-editor-head-select {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+
+.lg-editor-spacer {
+  flex: 1;
+}
+
+.lg-editor-split {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.lg-editor-left {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--color-border);
+  min-width: 0;
+}
+
+.lg-editor-desc-area {
+  flex-shrink: 0;
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.lg-editor-right {
+  width: 50%;
+  padding: 24px;
+  background: var(--color-bg);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.lg-editor-preview-label {
+  flex-shrink: 0;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.lg-editor-preview-box {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.lg-preview-fill {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.lg-preview-fill iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ========== 5. 코드 에디터 탭 (CodeEditorTabs) ========== */
+.lg-code-tabs-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.lg-code-tabs-bar {
+  flex-shrink: 0;
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.lg-code-tab {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.lg-code-tab--active {
+  background: var(--color-bg);
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.lg-code-tab-panel {
+  flex: 1;
+  min-height: 0;
+}
+
+.lg-code-tab-panel .cm-editor {
+  height: 100%;
+}
+
+/* ========== 6. 리소스 페이지 (ResourcesPage) ========== */
+/* lg-page-header--column, lg-resources-content 등은 하단 페이지 공통에서 정의 */
+
+/* ========== 7. 파일 구조 페이지 (FileStructurePage) ========== */
+/* lg-files-layout, lg-files-tree-wrap, lg-files-aside는 하단에서 정의 */
+
+/* ========== 8. 프로젝트 목록 (ProjectListPage) ========== */
+.lg-projects-wrap {
+  min-height: 100vh;
+  padding: 48px;
+  background: var(--color-bg);
+}
+
+.lg-projects-head {
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.lg-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 24px;
+}
+
+.lg-modal-box {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+
+/* ========== 9. 공유 뷰 (ShareViewPage) ========== */
+.lg-share-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100vh;
+}
+
+.lg-share-head {
+  flex-shrink: 0;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.lg-share-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.lg-share-side {
+  width: 220px;
+  min-width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--color-border);
+  padding: 16px;
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.lg-share-nav {
+  margin-top: 12px;
+  flex: 1;
+  overflow: auto;
+}
+
+.lg-share-nav-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 0;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text);
+  font-weight: 400;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.lg-share-nav-btn--active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.lg-share-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ---------- 사이드바 ---------- */
+.lg-sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.lg-sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.lg-sidebar-project-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.lg-sidebar-project-name {
+  flex: 1;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  border-radius: var(--radius);
+  min-width: 0;
+  font-family: inherit;
+  color: var(--color-text);
+}
+
+.lg-sidebar-project-name:hover {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.lg-sidebar-project-name--link {
+  color: var(--color-primary);
+}
+
+.lg-sidebar-settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.lg-sidebar-settings-btn:hover {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.lg-sidebar-settings-btn--open {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.lg-sidebar-settings-btn--open:hover {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.lg-sidebar-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 160px;
+  padding: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.lg-sidebar-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  border: none;
+  background: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--color-text);
+  font-family: inherit;
+}
+
+.lg-sidebar-dropdown-item:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.lg-sidebar-search {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.lg-sidebar-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.lg-sidebar-actions + .lg-sidebar-actions {
+  margin-top: 8px;
+}
+
+.lg-sidebar-nav {
+  flex: 1;
+  overflow: auto;
+  padding: 8px;
+}
+
+.lg-sidebar-hint {
+  margin: 0 0 8px;
+  padding: 4px 8px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.lg-sidebar-cat-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 5rem;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 14px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  color: var(--color-text);
+}
+
+.lg-sidebar-cat-btn:hover {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.lg-sidebar-cat-btn--active {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.lg-sidebar-cat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 5rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 14px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  color: var(--color-text);
+}
+
+.lg-sidebar-cat-item:hover {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.lg-sidebar-cat-item--selected {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.lg-sidebar-cat-item--dragging {
+  opacity: 0.5;
+}
+
+.lg-sidebar-cat-item--drag-over {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.lg-sidebar-cat-count {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+/* ---------- 페이지 공통 ---------- */
+.lg-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.lg-page-header {
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.lg-page-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.lg-page-desc {
+  margin: 6px 0 0;
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+.lg-page-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ---------- 탭 ---------- */
+.lg-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: 0 16px;
+}
+
+.lg-tab {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.lg-tab--active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+/* ---------- 폼 ---------- */
+.lg-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.lg-select {
+  min-width: 140px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--color-surface);
+  font-family: inherit;
+}
+
+.lg-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+/* ---------- 카드/패널 ---------- */
+.lg-card {
+  padding: 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.lg-card-title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lg-card-desc {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+/* ---------- 파일 구조 페이지 ---------- */
+.lg-files-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.lg-files-tree-wrap {
+  width: 420px;
+  min-width: 360px;
+  flex: 0 0 420px;
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.lg-files-aside {
+  width: 280px;
+  flex-shrink: 0;
+  overflow: auto;
+  padding: 24px;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---------- 리소스 페이지 (이미지 그리드) ---------- */
+.lg-assets-upload-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.lg-assets-upload-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.lg-assets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.lg-assets-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.lg-assets-card-thumb {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  padding: 8px;
+}
+
+.lg-assets-card-body {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lg-assets-help {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--color-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  font-size: 14px;
+}
+
+.lg-assets-help-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.lg-assets-help-list {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--color-text-muted);
+  line-height: 1.8;
+}
+
+/* ---------- 프로젝트 목록 ---------- */
+.lg-projects-hero {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.lg-projects-modal-title {
+  margin: 0 0 20px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+/* ---------- 공통 유틸 ---------- */
+.lg-text-muted {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.lg-text-muted--break {
+  margin: 0;
+  font-size: 14px;
+  word-break: break-all;
+  color: var(--color-text-muted);
+}
+
+.lg-input-mb {
+  margin-bottom: 8px;
+}
+
+.lg-btn-full {
+  width: 100%;
+}
+
+.lg-btn-danger {
+  width: 100%;
+  color: var(--color-error, #dc2626) !important; /* Button 인라인 variant 색상보다 우선 */
+}
+
+.lg-sidebar-hint--pad {
+  padding: 16px;
+}
+
+/* 페이지 헤더 세로 배치 (타이틀+설명만) */
+.lg-page-header--column {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* 사이드바 액션 버튼 (flex: 1) */
+.lg-sidebar-action-btn {
+  flex: 1;
+}
+
+.lg-sidebar-cat-item--grab {
+  cursor: grab;
+}
+
+.lg-sidebar-cat-item--pointer {
+  cursor: pointer;
+}
+
+.lg-sidebar-cat-drag-handle {
+  padding: 4px 6px;
+  color: var(--color-text-muted);
+  cursor: grab;
+  font-size: 14px;
+}
+
+.lg-sidebar-cat-inner {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: inherit;
+  font: inherit;
+  color: inherit;
+}
+
+.lg-sidebar-cat-remove {
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: var(--radius);
+}
+
+.lg-sidebar-footer {
+  padding: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+.lg-sidebar-footer-btn {
+  width: 100%;
+  font-size: 14px;
+}
+
+.lg-sidebar-footer-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.lg-input-flex1 {
+  flex: 1;
+  min-width: 0; /* flex 아이템이 내용보다 줄어들 수 있도록 */
+}
+
+/* 리소스 페이지 컨텐츠 */
+.lg-resources-content {
+  padding: 24px;
+}
+
+.lg-resources-desc {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.lg-resources-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.lg-section {
+  margin-bottom: 24px;
+}
+
+.lg-section-title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lg-code {
+  background: var(--color-surface);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* DescriptionField (에디터 설명 라벨/텍스트영역) */
+.lg-desc-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.lg-desc-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  resize: vertical;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.lg-upload-label-muted {
+  color: var(--color-text-muted);
+}
+
+.lg-select--min180 {
+  min-width: 180px;
+}
+
+.lg-select--full {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.lg-assets-card-thumb img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.lg-assets-card-placeholder {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.lg-btn-danger-sm {
+  align-self: flex-start;
+  padding: 4px 8px;
+  font-size: 14px;
+  color: var(--color-error, #dc2626) !important; /* Button 인라인 variant 색상보다 우선 */
+}
+
+.lg-assets-empty {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+/* 파일 input 숨김 */
+.lg-file-input-hidden {
+  display: none;
+}
+
+/* ---------- ResourcesPage FileRow ---------- */
+.lg-file-row {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.lg-file-row-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.lg-file-row-lang {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.lg-file-row-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.lg-file-row-chevron {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.lg-file-row-chevron--open {
+  transform: rotate(180deg);
+}
+
+.lg-file-row-body {
+  border-top: 1px solid var(--color-border);
+  min-height: 200px;
+}
+
+.lg-card-desc--mb16 {
+  margin: 0 0 16px;
+}
+
+/* ---------- 프로젝트 목록 페이지 ---------- */
+.lg-projects-page {
+  min-height: 100%;
+  padding: 48px;
+  background: var(--color-bg);
+}
+
+.lg-projects-header {
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.lg-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 24px;
+}
+
+.lg-modal-form {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+
+.lg-form-block {
+  margin-bottom: 16px;
+}
+
+.lg-form-block--mb20 {
+  margin-bottom: 20px;
+}
+
+.lg-input--full {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.lg-image-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lg-cover-thumb {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.lg-cover-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lg-participant-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lg-participant-row--wrap {
+  flex-wrap: wrap;
+}
+
+.lg-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+.lg-tag-remove {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+.lg-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.lg-empty-state {
+  padding: 48px;
+  text-align: center;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  border: 1px dashed var(--color-border);
+}
+
+.lg-empty-state-desc {
+  margin: 0 0 16px;
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+.lg-projects-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.lg-project-card {
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  position: relative;
+}
+
+.lg-project-card-btn {
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.lg-project-card-body {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+/* 버튼 호버 시 내부 카드 강조 (원래 인라인 onMouseEnter/Leave 동작과 동일) */
+.lg-project-card-btn:hover .lg-project-card-body {
+  border-color: var(--color-primary);
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.lg-project-card-cover {
+  width: 100%;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lg-project-card-cover--placeholder {
+  background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-border) 100%);
+}
+
+.lg-project-card-cover-icon {
+  font-size: 48px;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+.lg-project-card-info {
+  padding: 16px;
+}
+
+.lg-project-card-title {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.lg-project-card-participants {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lg-project-card-tag {
+  padding: 2px 8px;
+  background: rgba(37, 99, 235, 0.08);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.lg-project-card-muted {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.lg-project-card-edit {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+}
+
+/* 공유 뷰 헤더 액션 (flex gap 8) */
+.lg-share-head-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 공유 뷰 에러/로딩 전체 채우기 */
+.lg-grid-empty--fill {
+  height: 100%;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lg-grid-empty--fill-simple {
+  height: 100%;
+}
+
+.lg-page-title--no-margin {
+  margin: 0;
+}
+
+/* ---------- ShareViewPage ---------- */
+.lg-share-center {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--color-text-muted);
+}
+
+.lg-share-loading {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.lg-share-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.lg-share-main {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.lg-share-sidebar {
+  width: 220px;
+  min-width: 220px;
+  border-right: 1px solid var(--color-border);
+  padding: 16px;
+  background: var(--color-surface);
+}
+
+.lg-share-nav {
+  margin-top: 12px;
+}
+
+.lg-share-nav-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 0;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text);
+  font-weight: 400;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.lg-share-nav-btn--active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ---------- FileTreePanel ---------- */
+.lg-tree-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.lg-tree-indent {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  font-family: monospace;
+}
+
+.lg-tree-branch {
+  width: 14px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  font-family: monospace;
+}
+
+.lg-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px;
+  min-height: 22px;
+  cursor: default;
+  border-radius: 2px;
+}
+
+.lg-tree-row--selected {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.lg-tree-row--over {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.lg-tree-row--dragging {
+  outline: 2px dashed var(--color-primary);
+  opacity: 0.6;
+}
+
+.lg-tree-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: grab;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.lg-tree-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.lg-tree-spacer {
+  width: 18px;
+  display: inline-block;
+}
+
+.lg-tree-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lg-tree-name--bold {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.lg-context-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+
+.lg-context-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 140px;
+  padding: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.lg-context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  text-align: left;
+  border: none;
+  background: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--color-text);
+}
+
+.lg-context-menu-item--danger {
+  color: var(--color-error, #dc2626);
+}
+
+.lg-drag-overlay-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--color-surface);
+  border: 2px dashed var(--color-primary);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  opacity: 0.95;
+}
+
+.lg-tree-panel {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
+}
+
+.lg-tree-panel-inner {
+  padding: 8px 0;
+  min-width: 200px;
+}
+
+/* ---------- EditorPage ---------- */
+.lg-editor-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100vh;
+}
+
+.lg-editor-header-input {
+  width: 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+
+.lg-editor-body {
+  flex: 1;
+  display: flex;
+  min-height: 400px;
+}
+
+.lg-editor-left {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--color-border);
+  min-width: 0;
+}
+
+.lg-editor-desc-wrap {
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.lg-editor-right {
+  width: 50%;
+  padding: 24px;
+  background: var(--color-bg);
+  min-width: 0;
+}
+
+.lg-preview-label {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.lg-flex-1 {
+  flex: 1;
+}
+
+/* ---------- ComponentCard ---------- */
+.lg-component-card {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.lg-component-card-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.lg-component-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.lg-component-card-desc {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.lg-component-card-body {
+  padding: 16px;
+  min-height: 80px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lg-component-card-iframe {
+  width: 100%;
+  min-height: 60px;
+  border: none;
+}
+
+.lg-component-card-footer {
+  padding: 8px 16px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lg-component-card-edit {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--color-primary);
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+/* ---------- ErrorBoundary ---------- */
+.lg-error-boundary {
+  padding: 24px;
+  max-width: 600px;
+  margin: 40px auto;
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+}
+
+.lg-error-title {
+  color: var(--color-danger);
+  margin-top: 0;
+}
+
+.lg-error-pre {
+  background: #f5f5f5;
+  padding: 16px;
+  border-radius: 8px;
+  overflow: auto;
+  font-size: 14px;
+}
+
+.lg-error-desc {
+  color: #666;
+}
+
+/* ---------- DescriptionField ---------- */
+.lg-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* ---------- LivePreview ---------- */
+.lg-live-preview {
+  height: 100%;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.lg-live-preview-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* ---------- ComponentGrid ---------- */
+.lg-grid-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 15px;
+}
+
+.lg-grid-content {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+}
+
+.lg-grid-section {
+  margin-bottom: 32px;
+}
+
+.lg-grid-section-title {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.lg-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+/* ---------- CodeEditorTabs ---------- */
+.lg-editor-tabs {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.lg-editor-tab-list {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.lg-editor-tab {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.lg-editor-tab--active {
+  background: var(--color-bg);
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.lg-editor-tab-panel {
+  flex: 1;
+  min-height: 0;
+}
+
+.lg-editor-tab-panel .cm-editor {
+  height: 100%;
+}
+
+/* Sidebar: cursor when editing categories */
+.lg-sidebar-cat-item--editing {
+  cursor: grab;
+}
