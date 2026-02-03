@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useGuideStore } from '@/store'
 import { Button } from '@/components/ui/Button'
-import { buildShareUrl } from '@/lib/share'
 
 interface SidebarProps {
   projectId: string
@@ -30,7 +29,6 @@ export function Sidebar({
   const addCategory = useGuideStore((s) => s.addCategory)
   const removeCategory = useGuideStore((s) => s.removeCategory)
   const reorderCategories = useGuideStore((s) => s.reorderCategories)
-  const [shareCopied, setShareCopied] = useState(false)
   const [editingCategories, setEditingCategories] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [draggedCat, setDraggedCat] = useState<string | null>(null)
@@ -57,17 +55,6 @@ export function Sidebar({
     const hasComponents = countByCategory[cat] > 0
     return matchSearch || hasComponents
   })
-
-  async function handleShare() {
-    const url = buildShareUrl(components, {
-      commonFiles: project?.commonFiles,
-      commonAssets: project?.commonAssets,
-      projectName: project?.name,
-    })
-    await navigator.clipboard.writeText(url)
-    setShareCopied(true)
-    setTimeout(() => setShareCopied(false), 2000)
-  }
 
   function handleAddCategory() {
     const name = newCategoryName.trim()
@@ -182,11 +169,6 @@ export function Sidebar({
         <div className="lg-sidebar-actions">
           <Button variant="primary" style={{ flex: 1 }} onClick={() => navigate(`/projects/${projectId}/edit/new`)}>
             + 새 컴포넌트
-          </Button>
-        </div>
-        <div className="lg-sidebar-actions">
-          <Button variant="ghost" style={{ flex: 1 }} onClick={handleShare}>
-            {shareCopied ? '복사됨' : '공유 URL'}
           </Button>
         </div>
       </div>
