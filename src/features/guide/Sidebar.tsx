@@ -29,6 +29,8 @@ export function Sidebar({
   const addCategory = useGuideStore((s) => s.addCategory)
   const removeCategory = useGuideStore((s) => s.removeCategory)
   const reorderCategories = useGuideStore((s) => s.reorderCategories)
+  const saveProjectAsTemplate = useGuideStore((s) => s.saveProjectAsTemplate)
+  const resetEditableTemplate = useGuideStore((s) => s.resetEditableTemplate)
   const [editingCategories, setEditingCategories] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [draggedCat, setDraggedCat] = useState<string | null>(null)
@@ -166,11 +168,30 @@ export function Sidebar({
           onChange={(e) => onSearchChange(e.target.value)}
           className="lg-sidebar-search"
         />
-        <div className="lg-sidebar-actions">
-          <Button variant="primary" style={{ flex: 1 }} onClick={() => navigate(`/projects/${projectId}/edit/new`)}>
-            + 새 컴포넌트
-          </Button>
-        </div>
+        {(project?.type === 'project' || project?.type === 'userTemplate' || project?.type === 'editableTemplate' || projectId === 'krds' || projectId === 'mxds') && (
+          <div className="lg-sidebar-actions">
+            <Button variant="primary" style={{ flex: 1 }} onClick={() => navigate(`/projects/${projectId}/edit/new`)}>
+              + 새 컴포넌트
+            </Button>
+          </div>
+        )}
+        {project?.type === 'project' && (
+          <div className="lg-sidebar-actions">
+            <Button
+              variant="secondary"
+              style={{ flex: 1 }}
+              onClick={() => {
+                const name = window.prompt('템플릿 이름을 입력하세요.', projectName + ' 템플릿')
+                if (name?.trim()) {
+                  saveProjectAsTemplate(projectId, name.trim())
+                  alert('템플릿으로 저장되었습니다. 프로젝트 목록의 "내 템플릿"에서 확인할 수 있습니다.')
+                }
+              }}
+            >
+              템플릿으로 저장
+            </Button>
+          </div>
+        )}
       </div>
       <nav className="lg-sidebar-nav">
         {!isGuidePage && <p className="lg-sidebar-hint">클릭 시 카테고리 목록으로 이동</p>}
@@ -228,6 +249,7 @@ export function Sidebar({
           )
         })}
       </nav>
+      {(project?.type === 'project' || project?.type === 'userTemplate' || project?.type === 'editableTemplate' || projectId === 'krds' || projectId === 'mxds') && (
       <div style={{ padding: 8, borderTop: '1px solid var(--color-border)' }}>
         <Button variant="ghost" style={{ width: '100%', fontSize: 14 }} onClick={() => setEditingCategories((v) => !v)}>
           {editingCategories ? '완료' : '카테고리 편집'}
@@ -248,7 +270,21 @@ export function Sidebar({
             </Button>
           </div>
         )}
+        {(projectId === 'krds' || projectId === 'mxds') && (
+          <Button
+            variant="ghost"
+            style={{ width: '100%', fontSize: 14, marginTop: 6, color: 'var(--color-text-muted)' }}
+            onClick={() => {
+              if (!window.confirm('KRDS/MXDS 편집 내용을 초기화하고 시드 데이터로 되돌릴까요? 저장된 편집본이 삭제됩니다.')) return
+              resetEditableTemplate(projectId as 'krds' | 'mxds')
+              window.location.reload()
+            }}
+          >
+            초기화 (시드로 되돌리기)
+          </Button>
+        )}
       </div>
+      )}
     </aside>
   )
 }

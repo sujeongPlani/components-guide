@@ -39,6 +39,7 @@ export function createDefaultFileTree(): FileNode[] {
           ],
         },
         { id: uuid(), name: 'img', type: 'folder', children: [] },
+        { id: uuid(), name: 'components', type: 'folder', children: [] },
         { id: uuid(), name: 'index.html', type: 'file', children: undefined },
       ],
     },
@@ -112,6 +113,28 @@ export function getFolderByName(nodes: FileNode[], name: string): FileNode | nul
     }
   }
   return null
+}
+
+/** 루트(첫 번째 폴더) 아래에 폴더가 없으면 추가. components 폴더 등 */
+export function ensureFolderUnderRoot(tree: FileNode[], folderName: string): FileNode[] {
+  if (getFolderByName(tree, folderName)) return tree
+  const root = tree[0]
+  if (!root || root.type !== 'folder') return tree
+  const newFolder: FileNode = {
+    id: uuid(),
+    name: folderName,
+    type: 'folder',
+    children: [],
+  }
+  return [{ ...root, children: [...(root.children ?? []), newFolder] }]
+}
+
+/** 해당 폴더(이름) 아래에서 파일명으로 노드 찾기 (삭제 시 id 확인용) */
+export function findFileInFolder(nodes: FileNode[], folderName: string, fileName: string): FileNode | null {
+  const folder = getFolderByName(nodes, folderName)
+  if (!folder?.children) return null
+  const file = folder.children.find((c) => c.type === 'file' && c.name === fileName)
+  return file ?? null
 }
 
 /** 해당 폴더(이름) 아래에 파일 노드가 없으면 추가. 트리 구조·경로 동기화용 */

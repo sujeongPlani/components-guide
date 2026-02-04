@@ -1,0 +1,22 @@
+{
+  "name": "MXDS",
+  "description": "기본 템플릿 (MXDS)",
+  "type": "systemTemplate",
+  "components": [],
+  "categories": ["Button", "Form", "Card", "Layout", "Navigation", "Modal", "Table", "Typography", "Etc"],
+  "commonFiles": [],
+  "commonAssets": [],
+  "fileTree": [
+    {
+      "name": "WebContent",
+      "type": "folder",
+      "children": [
+        { "name": "css", "type": "folder", "children": [{ "name": "component.css", "type": "file" }] },
+        { "name": "js", "type": "folder", "children": [{ "name": "component.js", "type": "file" }] },
+        { "name": "img", "type": "folder", "children": [] },
+        { "name": "components", "type": "folder", "children": [] },
+        { "name": "index.html", "type": "file" }
+      ]
+    }
+  ]
+}

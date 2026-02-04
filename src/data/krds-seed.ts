@@ -1,9 +1,9 @@
 /**
- * KRDS 시드: 앱에 처음 들어왔을 때 프로젝트 목록에 이 프로젝트가 없으면 넣음.
- * CSS/JS는 src/data/krds/ 에서 ?raw 로, SVG는 glob으로 불러와 commonAssets에 넣음.
+ * KRDS/MXDS 시드: systemTemplate 기본 템플릿. data 폴더에서 로드.
  */
 import type { Project, CommonFile, CommonAsset, FileNode } from '@/store/types'
 import { DEFAULT_CATEGORIES } from '@/store/types'
+import { createDefaultFileTree } from '@/lib/fileTree'
 
 import mixinCss from './krds/mixin.css?raw'
 import krdsTokensCss from './krds/krds_tokens.css?raw'
@@ -76,28 +76,35 @@ export function getKrdsSeedProject(): Project {
     }
   }
 
+  // WebContent/ ├ css/ │ └ *.css ├ js/ │ └ *.js ├ img/ │ └ (이미지·폴더) └ index.html
   const fileTree: FileNode[] = [
-    fileNode('css', 'folder', [
-      fileNode('mixin.css', 'file'),
-      fileNode('krds_tokens.css', 'file'),
-      fileNode('krds.css', 'file'),
-      fileNode('krds.min.css', 'file'),
-      fileNode('krds_respond.css', 'file'),
-      fileNode('component.css', 'file'),
+    fileNode('WebContent', 'folder', [
+      fileNode('css', 'folder', [
+        fileNode('mixin.css', 'file'),
+        fileNode('krds_tokens.css', 'file'),
+        fileNode('krds.css', 'file'),
+        fileNode('krds.min.css', 'file'),
+        fileNode('krds_respond.css', 'file'),
+        fileNode('component.css', 'file'),
+      ]),
+      fileNode('js', 'folder', [
+        fileNode('pattern.js', 'file'),
+        fileNode('component.js', 'file'),
+      ]),
+      fileNode('img', 'folder', [
+        fileNode('icon', 'folder', iconFileNodes, iconFolderId),
+        ...imgRootFileNodes,
+      ], imgFolderId),
+      fileNode('index.html', 'file'),
     ]),
-    fileNode('js', 'folder', [
-      fileNode('pattern.js', 'file'),
-      fileNode('component.js', 'file'),
-    ]),
-    fileNode('img', 'folder', [
-      fileNode('icon', 'folder', iconFileNodes, iconFolderId),
-      ...imgRootFileNodes,
-    ], imgFolderId),
   ]
 
   cached = {
     id: uuid(),
     name: 'KRDS',
+    description: '기본 디자인 시스템 가이드 (KRDS)',
+    type: 'systemTemplate',
+    createdAt: 0,
     components: [],
     categories: [...DEFAULT_CATEGORIES],
     commonFiles,
@@ -107,4 +114,26 @@ export function getKrdsSeedProject(): Project {
     isBookmarkGuide: false,
   }
   return cached
+}
+
+/** MXDS 시드: 기본 템플릿 (빈 구조). data 폴더에 MXDS 전용 에셋이 있으면 추후 확장 */
+let mxdsCached: Project | null = null
+
+export function getMxdsSeedProject(): Project {
+  if (mxdsCached) return mxdsCached
+  mxdsCached = {
+    id: uuid(),
+    name: 'MXDS',
+    description: '기본 템플릿 (MXDS)',
+    type: 'systemTemplate',
+    createdAt: 0,
+    components: [],
+    categories: [...DEFAULT_CATEGORIES],
+    commonFiles: [],
+    commonAssets: [],
+    fileTree: createDefaultFileTree(),
+    exportPathTree: [],
+    isBookmarkGuide: false,
+  }
+  return mxdsCached
 }

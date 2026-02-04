@@ -99,10 +99,9 @@ function escapeJsForHtml(js: string): string {
 }
 
 /**
- * 단일 컴포넌트용 iframe srcdoc 생성
- * commonCss → 첫 번째 style, componentCss → 두 번째 style (후순위 적용)
- * commonJs → 첫 번째 script, componentJs → 두 번째 script (후순위 실행)
- * assets가 있으면 window.ASSETS, window.getAsset(name) 주입 및 data-asset 자동 치환
+ * 단일 컴포넌트용 iframe srcdoc 생성.
+ * commonCss/componentCss/commonJs/componentJs 는 이미 병합된 문자열, assets는 dataUrl로 주입.
+ * (fileTree 상대 경로 해석 없음. 미리보기는 가상 트리가 아닌 병합 데이터만 사용. 물리 파일 생성 없음.)
  */
 export function buildPreviewDocument(
   html: string,

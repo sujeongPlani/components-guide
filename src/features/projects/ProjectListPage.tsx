@@ -1,154 +1,274 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGuideStore } from '@/store'
+import type { Project } from '@/store/types'
 import { Button } from '@/components/ui/Button'
-import { downloadBackup, parseBackupFile } from '@/lib/backup'
 
-/** 별 아이콘 (북마크 가이드 토글) */
-function StarIcon({ filled, onClick }: { filled: boolean; onClick: (e: React.MouseEvent) => void }) {
+const SECTION_STYLE = { marginBottom: 40 }
+const SECTION_TITLE_STYLE = { margin: '0 0 16px', fontSize: 18, fontWeight: 600, color: 'var(--color-text-muted)' }
+const CARD_GRID_STYLE: React.CSSProperties = { listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }
+
+const BASE = (import.meta.env.BASE_URL ?? '/').replace(/\/*$/, '') + '/'
+const KRDS_COVER = `${BASE}logos/krds-cover.png`
+const MXDS_COVER = `${BASE}logos/mxds-cover.png`
+const KRDS_COLOR = '#256ef4'
+
+const CUSTOM_THUMB_URLS = [1, 2, 3, 4, 5].map((i) => `${BASE}logos/custom-thumb-${i}.png`)
+const CUSTOM_THUMB_FOR_MODAL = CUSTOM_THUMB_URLS[2]
+
+function getCustomThumbForProject(projectId: string): string {
+  let n = 0
+  for (let i = 0; i < projectId.length; i++) n = (n << 5) - n + projectId.charCodeAt(i)
+  const idx = Math.abs(n) % CUSTOM_THUMB_URLS.length
+  return CUSTOM_THUMB_URLS[idx]
+}
+
+const CREATE_OPTION_THUMB = { width: 100, height: 56 }
+const createOptionButtonStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  padding: 0,
+  borderRadius: 'var(--radius)',
+  border: '2px solid var(--color-border)',
+  overflow: 'hidden',
+  background: 'var(--color-surface)',
+  cursor: 'pointer',
+  textAlign: 'left',
+  width: '100%',
+  boxSizing: 'border-box',
+  minHeight: CREATE_OPTION_THUMB.height,
+}
+
+function getTemplateCover(p: Project, systemKind?: 'krds' | 'mxds'): string | null {
+  if (p.type !== 'systemTemplate') return null
+  if (systemKind === 'krds' || (!systemKind && p.name === 'KRDS')) return KRDS_COVER
+  if (systemKind === 'mxds' || (!systemKind && p.name === 'MXDS')) return MXDS_COVER
+  return null
+}
+
+function ProjectCard({
+  p,
+  onOpen,
+  onEdit,
+  onEditSystemTemplate,
+  onUseAsTemplate,
+  showEditDelete,
+  systemKind,
+}: {
+  p: Project
+  onOpen: (id: string) => void
+  onEdit?: (p: Project) => void
+  onEditSystemTemplate?: (kind: 'krds' | 'mxds') => void
+  onUseAsTemplate?: (id: string) => void
+  showEditDelete: boolean
+  systemKind?: 'krds' | 'mxds'
+}) {
   return (
-    <button
-      type="button"
-      onClick={(e) => { e.stopPropagation(); onClick(e) }}
-      title={filled ? '북마크 가이드 해제' : '북마크 가이드로 등록 (새 프로젝트 생성 시 불러오기 가능)'}
-      style={{ padding: 4, border: 'none', background: 'none', cursor: 'pointer', color: filled ? '#f59e0b' : 'var(--color-text-muted)', fontSize: 18, lineHeight: 1 }}
-      aria-label={filled ? '북마크 해제' : '북마크'}
-    >
-      {filled ? '★' : '☆'}
-    </button>
+    <li>
+      <div style={{ width: '100%', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)', overflow: 'hidden', position: 'relative' }}>
+        <button
+          type="button"
+          onClick={() => onOpen(p.id)}
+          style={{ width: '100%', padding: 0, textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', outline: 'none' }}
+          onMouseEnter={(e) => {
+            const card = e.currentTarget.closest('li')?.querySelector('[data-card-body]') as HTMLElement
+            if (card) {
+              card.style.borderColor = 'var(--color-primary)'
+              card.style.background = 'rgba(37,99,235,0.04)'
+            }
+          }}
+          onMouseLeave={(e) => {
+            const card = e.currentTarget.closest('li')?.querySelector('[data-card-body]') as HTMLElement
+            if (card) {
+              card.style.borderColor = ''
+              card.style.background = ''
+            }
+          }}
+        >
+          <div data-card-body style={{ width: '100%', transition: 'background .15s' }}>
+            <div
+              style={{
+                width: '100%',
+                height: 160,
+                background: (() => {
+                  const cover = getTemplateCover(p, systemKind)
+                  if (cover) return `url(${cover}) center/cover`
+                  if (p.coverImage) return `url(${p.coverImage}) center/cover`
+                  return `url(${getCustomThumbForProject(p.id)}) center/cover`
+                })(),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            />
+            <div style={{ padding: 16, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+              {p.type === 'project' && p.participants && p.participants.length > 0 && (
+                <div style={{ fontSize: 14, color: 'var(--color-text-muted)', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {p.participants.map((who, i) => (
+                    <span key={i} style={{ padding: '2px 8px', background: 'rgba(37,99,235,0.08)', borderRadius: 4, fontSize: 14 }}>{who}</span>
+                  ))}
+                </div>
+              )}
+              {p.type === 'project' && (!p.participants || p.participants.length === 0) && <div style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>참여자 없음</div>}
+            </div>
+          </div>
+        </button>
+        <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 1, display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+          {onUseAsTemplate && (
+            <Button type="button" variant="primary" size="s" onClick={(e) => { e.stopPropagation(); onUseAsTemplate(p.id) }}>
+              이 템플릿으로 만들기
+            </Button>
+          )}
+          {showEditDelete && (onEdit || onEditSystemTemplate) && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="s"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (onEditSystemTemplate && p.type === 'systemTemplate' && systemKind) onEditSystemTemplate(systemKind)
+                else if (onEdit && (p.type === 'project' || p.type === 'userTemplate')) onEdit(p)
+              }}
+            >
+              편집
+            </Button>
+          )}
+        </div>
+      </div>
+    </li>
   )
 }
 
 export function ProjectListPage() {
   const navigate = useNavigate()
   const projects = useGuideStore((s) => s.projects)
-  const bookmarkGuideProjects = projects.filter((p) => p.isBookmarkGuide)
+  const getSystemTemplates = useGuideStore((s) => s.getSystemTemplates)
   const addProject = useGuideStore((s) => s.addProject)
+  const addProjectFromTemplate = useGuideStore((s) => s.addProjectFromTemplate)
   const updateProjectMeta = useGuideStore((s) => s.updateProjectMeta)
   const removeProject = useGuideStore((s) => s.removeProject)
-  const [showForm, setShowForm] = useState(false)
+
+  const systemTemplates = getSystemTemplates()
+  const userTemplates = projects.filter((p) => p.type === 'userTemplate')
+  const userProjects = projects.filter((p) => p.type === 'project')
+
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createStep, setCreateStep] = useState<'choose' | 'name'>('choose')
+  const [createSource, setCreateSource] = useState<'empty' | 'krds' | 'mxds' | string>('empty')
+  const [createName, setCreateName] = useState('')
+  const [createParticipants, setCreateParticipants] = useState<string[]>([])
+  const [createParticipantInput, setCreateParticipantInput] = useState('')
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null)
-  const [name, setName] = useState('')
-  const [coverImage, setCoverImage] = useState<string | null>(null)
-  const [participants, setParticipants] = useState<string[]>([])
-  const [newParticipant, setNewParticipant] = useState('')
-  const [selectedGuideIds, setSelectedGuideIds] = useState<string[]>([])
+  const [editName, setEditName] = useState('')
+  const [editCoverImage, setEditCoverImage] = useState<string | null>(null)
+  const [editParticipants, setEditParticipants] = useState<string[]>([])
+  const [editParticipantInput, setEditParticipantInput] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const backupInputRef = useRef<HTMLInputElement>(null)
-  const restoreFromBackup = useGuideStore((s) => s.restoreFromBackup)
+  const systemCoverInputRef = useRef<HTMLInputElement>(null)
 
-  function toggleGuide(guideId: string) {
-    setSelectedGuideIds((prev) =>
-      prev.includes(guideId) ? prev.filter((id) => id !== guideId) : [...prev, guideId]
-    )
+  function handleCreateFrom(source: 'empty' | 'krds' | 'mxds' | string) {
+    setCreateSource(source)
+    setCreateName('')
+    setCreateParticipants([])
+    setCreateParticipantInput('')
+    setCreateStep('name')
   }
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => setCoverImage(reader.result as string)
-    reader.readAsDataURL(file)
-    e.target.value = ''
+  function addCreateParticipant() {
+    const name = createParticipantInput.trim()
+    if (!name || createParticipants.includes(name)) return
+    setCreateParticipants((prev) => [...prev, name])
+    setCreateParticipantInput('')
   }
 
-  function addParticipant() {
-    const trimmed = newParticipant.trim()
-    if (trimmed) {
-      setParticipants((prev) => [...prev, trimmed])
-      setNewParticipant('')
-    }
+  function removeCreateParticipant(name: string) {
+    setCreateParticipants((prev) => prev.filter((p) => p !== name))
   }
 
-  function removeParticipant(index: number) {
-    setParticipants((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  function openEditForm(project: {
-    id: string
-    name: string
-    coverImage?: string
-    participants?: string[]
-  }) {
-    setEditingProjectId(project.id)
-    setName(project.name)
-    setCoverImage(project.coverImage ?? null)
-    setParticipants([...(project.participants ?? [])])
-    setNewParticipant('')
-    setShowForm(true)
-  }
-
-  function handleSubmit(e: React.FormEvent) {
+  function handleCreateSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const trimmedName = name.trim()
-    if (!trimmedName) {
-      alert('프로젝트 이름을 입력해 주세요.')
-      return
-    }
-    const list = participants.filter(Boolean)
-    if (editingProjectId) {
-      updateProjectMeta(editingProjectId, {
-        name: trimmedName,
-        coverImage: coverImage ?? undefined,
-        participants: list.length ? list : undefined,
-      })
-      setShowForm(false)
-      setEditingProjectId(null)
-      setName('')
-      setCoverImage(null)
-      setParticipants([])
+    const name = createName.trim() || (createSource === 'krds' ? 'KRDS 복사본' : createSource === 'mxds' ? 'MXDS 복사본' : '새 프로젝트')
+    const participants = createParticipants.length ? createParticipants : undefined
+    let id: string
+    if (createSource === 'empty') {
+      id = addProject(name, { participants })
+    } else if (createSource === 'krds') {
+      id = addProjectFromTemplate('krds', name, { participants })
+    } else if (createSource === 'mxds') {
+      id = addProjectFromTemplate('mxds', name, { participants })
     } else {
-      const id = addProject(trimmedName, {
-        coverImage: coverImage ?? undefined,
-        participants: list.length ? list : undefined,
-        selectedGuideIds: selectedGuideIds.length ? selectedGuideIds : undefined,
-      })
-      setShowForm(false)
-      setName('')
-      setCoverImage(null)
-      setParticipants([])
-      setSelectedGuideIds([])
+      id = addProjectFromTemplate(createSource, name, { participants })
+    }
+    if (id) {
+      setShowCreateModal(false)
+      setCreateStep('choose')
+      setCreateSource('empty')
+      setCreateParticipants([])
       navigate(`/projects/${id}`)
     }
-  }
-
-  function handleCancel() {
-    setShowForm(false)
-    setEditingProjectId(null)
-    setName('')
-    setCoverImage(null)
-    setParticipants([])
-    setSelectedGuideIds([])
   }
 
   function handleOpenProject(id: string) {
     navigate(`/projects/${id}`)
   }
 
-  function handleDeleteProject(e: React.MouseEvent, projectId: string, projectName: string) {
-    e.stopPropagation()
-    if (!window.confirm(`"${projectName}" 프로젝트를 삭제할까요? 삭제된 프로젝트는 복구할 수 없습니다.`)) return
-    removeProject(projectId)
-    navigate('/projects')
+  function addEditParticipant() {
+    const name = editParticipantInput.trim()
+    if (!name || editParticipants.includes(name)) return
+    setEditParticipants((prev) => [...prev, name])
+    setEditParticipantInput('')
   }
 
-  async function handleImportBackup(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    try {
-      const text = await file.text()
-      const payload = parseBackupFile(text)
-      if (!payload) {
-        alert('올바른 백업 파일이 아닙니다.')
-        return
-      }
-      restoreFromBackup(payload)
-      alert(`가져오기 완료. 프로젝트 ${payload.projects.length}개가 등록되었습니다.`)
-    } catch (err) {
-      console.error(err)
-      alert('파일을 읽는 중 오류가 발생했습니다.')
-    }
+  function removeEditParticipant(name: string) {
+    setEditParticipants((prev) => prev.filter((p) => p !== name))
+  }
+
+  function openEditForm(project: Project) {
+    if (project.type !== 'project' && project.type !== 'userTemplate') return
+    setEditingProjectId(project.id)
+    setEditName(project.name)
+    setEditCoverImage(project.coverImage ?? null)
+    setEditParticipants([...(project.participants ?? [])])
+    setEditParticipantInput('')
+  }
+
+  const [editingSystemKind, setEditingSystemKind] = useState<'krds' | 'mxds' | null>(null)
+  const [editSystemName, setEditSystemName] = useState('')
+  const [editSystemDescription, setEditSystemDescription] = useState('')
+  const [editSystemCoverImage, setEditSystemCoverImage] = useState<string | null>(null)
+  const setSystemTemplateMeta = useGuideStore((s) => s.setSystemTemplateMeta)
+
+  function openEditSystemForm(kind: 'krds' | 'mxds') {
+    const templates = getSystemTemplates()
+    const p = templates[kind === 'krds' ? 0 : 1]
+    setEditingSystemKind(kind)
+    setEditSystemName(p.name)
+    setEditSystemDescription(p.description ?? '')
+    setEditSystemCoverImage(p.coverImage ?? null)
+  }
+
+  function handleEditSystemSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editingSystemKind) return
+    setSystemTemplateMeta(editingSystemKind, {
+      name: editSystemName.trim() || undefined,
+      description: editSystemDescription.trim() || undefined,
+      coverImage: editSystemCoverImage ?? undefined,
+    })
+    setEditingSystemKind(null)
+  }
+
+  function handleEditSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editingProjectId) return
+    updateProjectMeta(editingProjectId, {
+      name: editName.trim() || '프로젝트',
+      coverImage: editCoverImage ?? undefined,
+      participants: editParticipants.length ? editParticipants : undefined,
+    })
+    setEditingProjectId(null)
   }
 
   return (
@@ -157,33 +277,12 @@ export function ProjectListPage() {
         <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700 }}>프로젝트</h1>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <Button
-            variant="secondary"
-            onClick={() => backupInputRef.current?.click()}
-          >
-            데이터 가져오기
-          </Button>
-          <input
-            ref={backupInputRef}
-            type="file"
-            accept=".json,application/json"
-            style={{ display: 'none' }}
-            onChange={handleImportBackup}
-          />
-          <Button
-            variant="secondary"
-            onClick={() => downloadBackup(projects)}
-          >
-            데이터 내보내기
-          </Button>
-          <Button
             variant="primary"
             onClick={() => {
-              setEditingProjectId(null)
-              setShowForm(true)
-              setName('')
-              setCoverImage(null)
-              setParticipants([])
-              setSelectedGuideIds([])
+              setShowCreateModal(true)
+              setCreateStep('choose')
+              setCreateSource('empty')
+              setCreateName('')
             }}
           >
             + 새 프로젝트
@@ -191,217 +290,327 @@ export function ProjectListPage() {
         </div>
       </header>
 
-      {showForm && (
+      {/* 1) 기본 템플릿 */}
+      <section style={SECTION_STYLE}>
+        <h2 style={{ ...SECTION_TITLE_STYLE, fontSize: 20, color: 'var(--color-text)', borderBottom: '2px solid var(--color-primary)', paddingBottom: 8 }}>
+          기본 템플릿
+        </h2>
+        <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--color-text-muted)' }}>
+          기준 가이드입니다. 이름·설명·커버 이미지는 편집할 수 있으며, 이 템플릿으로 새 프로젝트를 만들 수 있습니다.
+        </p>
+        <ul style={CARD_GRID_STYLE}>
+          {systemTemplates.map((p, idx) => (
+            <ProjectCard
+              key={p.id}
+              p={p}
+              systemKind={idx === 0 ? 'krds' : 'mxds'}
+              onOpen={handleOpenProject}
+              onEditSystemTemplate={openEditSystemForm}
+              onUseAsTemplate={() => {
+                setShowCreateModal(true)
+                setCreateSource(idx === 0 ? 'krds' : 'mxds')
+                setCreateStep('name')
+                setCreateName('')
+              }}
+              showEditDelete={true}
+            />
+          ))}
+        </ul>
+      </section>
+
+      {/* 2) 내 템플릿 */}
+      {userTemplates.length > 0 && (
+        <section style={SECTION_STYLE}>
+          <h2 style={SECTION_TITLE_STYLE}>내 템플릿</h2>
+          <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--color-text-muted)' }}>
+            프로젝트에서 저장한 템플릿입니다. 이름·커버 등 메타를 편집할 수 있으며, 이 템플릿으로 새 프로젝트를 만들 수 있습니다.
+          </p>
+          <ul style={CARD_GRID_STYLE}>
+            {userTemplates.map((p) => (
+              <ProjectCard
+                key={p.id}
+                p={p}
+                onOpen={handleOpenProject}
+                onEdit={openEditForm}
+                onUseAsTemplate={(id) => {
+                  setShowCreateModal(true)
+                  setCreateSource(id)
+                  setCreateStep('name')
+                  setCreateName('')
+                }}
+                showEditDelete={true}
+              />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* 3) 내 프로젝트 */}
+      <section style={SECTION_STYLE}>
+        <h2 style={SECTION_TITLE_STYLE}>내 프로젝트</h2>
+        <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--color-text-muted)' }}>
+          직접 작업하는 프로젝트입니다. 편집·삭제·템플릿 저장이 가능합니다.
+        </p>
+        {userProjects.length === 0 ? (
+          <div style={{ padding: 48, textAlign: 'center', background: 'var(--color-surface)', borderRadius: 'var(--radius)', border: '1px dashed var(--color-border)' }}>
+            <p style={{ margin: '0 0 16px', fontSize: 15, color: 'var(--color-text-muted)' }}>등록된 프로젝트가 없습니다.</p>
+            <Button variant="primary" onClick={() => setShowCreateModal(true)}>첫 프로젝트 만들기</Button>
+          </div>
+        ) : (
+          <ul style={CARD_GRID_STYLE}>
+            {userProjects.map((p) => (
+              <ProjectCard
+                key={p.id}
+                p={p}
+                onOpen={handleOpenProject}
+                onEdit={openEditForm}
+                showEditDelete={true}
+              />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* 새 프로젝트 모달 */}
+      {showCreateModal && (
         <div
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}
-          onClick={(e) => e.target === e.currentTarget && handleCancel()}
+          onClick={(e) => e.target === e.currentTarget && (setShowCreateModal(false), setCreateStep('choose'))}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 440, maxHeight: '90vh', overflow: 'auto', background: 'var(--color-surface)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)', padding: 24 }}
+          >
+            {createStep === 'choose' ? (
+              <>
+                <h2 style={{ margin: '0 0 20px', fontSize: 22, fontWeight: 600 }}>새 프로젝트 만들기</h2>
+                <p style={{ margin: '0 0 16px', fontSize: 16, color: 'var(--color-text-muted)'}}>어떤 방식으로 만들까요?</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <button type="button" onClick={() => handleCreateFrom('empty')} style={createOptionButtonStyle}>
+                    <img src={CUSTOM_THUMB_FOR_MODAL} alt="" style={{ ...CREATE_OPTION_THUMB, objectFit: 'cover', flexShrink: 0 }} />
+                    <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--color-text)', padding: '0 14px' }}>커스텀 프로젝트</span>
+                  </button>
+                  <button type="button" onClick={() => handleCreateFrom('krds')} style={createOptionButtonStyle}>
+                    <img src={KRDS_COVER} alt="KRDS" style={{ ...CREATE_OPTION_THUMB, objectFit: 'cover', flexShrink: 0 }} />
+                    <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--color-text)', padding: '0 14px' }}>KRDS 기반</span>
+                  </button>
+                  <button type="button" onClick={() => handleCreateFrom('mxds')} style={createOptionButtonStyle}>
+                    <img src={MXDS_COVER} alt="MXDS" style={{ ...CREATE_OPTION_THUMB, objectFit: 'cover', flexShrink: 0 }} />
+                    <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--color-text)', padding: '0 14px' }}>MXDS 기반</span>
+                  </button>
+                  {userTemplates.length > 0 && (
+                    <>
+                      <div style={{ borderTop: '1px solid var(--color-border)', margin: '8px 0', paddingTop: 12 }}>
+                        <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>내 템플릿</span>
+                      </div>
+                      {userTemplates.map((t) => (
+                        <Button key={t.id} variant="secondary" style={{ justifyContent: 'flex-start', padding: 14 }} onClick={() => handleCreateFrom(t.id)}>
+                          {t.name}
+                        </Button>
+                      ))}
+                    </>
+                  )}
+                </div>
+                <div style={{ marginTop: 20 }}>
+                  <Button variant="ghost" onClick={() => setShowCreateModal(false)}>취소</Button>
+                </div>
+              </>
+            ) : (
+              <form onSubmit={handleCreateSubmit}>
+                <h2 style={{ margin: '0 0 20px', fontSize: 22, fontWeight: 600 }}>프로젝트 이름</h2>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 500, color: 'var(--color-text-muted)' }}>이름</label>
+                  <input
+                    type="text"
+                    value={createName}
+                    onChange={(e) => setCreateName(e.target.value)}
+                    placeholder={createSource === 'empty' ? '프로젝트 이름' : createSource === 'krds' ? 'KRDS 복사본' : createSource === 'mxds' ? 'MXDS 복사본' : '프로젝트 이름'}
+                    autoFocus
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', fontSize: 14, boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 500, color: 'var(--color-text-muted)' }}>참여자</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', background: 'var(--color-bg)' }}>
+                    {createParticipants.map((name) => (
+                      <span
+                        key={name}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 8px', background: 'rgba(37,99,235,0.12)', borderRadius: 6, fontSize: 13,
+                        }}
+                      >
+                        {name}
+                        <button
+                          type="button"
+                          onClick={() => removeCreateParticipant(name)}
+                          style={{ padding: 0, margin: 0, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 14, lineHeight: 1 }}
+                          aria-label={`${name} 제거`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    <input
+                      type="text"
+                      value={createParticipantInput}
+                      onChange={(e) => setCreateParticipantInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCreateParticipant() } }}
+                      placeholder="이름 입력 후 Enter"
+                      style={{ flex: 1, minWidth: 120, padding: '4px 0', border: 'none', background: 'none', fontSize: 14, outline: 'none', color: 'var(--color-text)' }}
+                    />
+                  </div>
+                  <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>여러 명을 추가할 수 있습니다. 입력 후 Enter를 누르세요.</p>
+                </div>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <Button type="button" variant="ghost" onClick={() => setCreateStep('choose')}>뒤로</Button>
+                  <Button type="submit" variant="primary">만들기</Button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 기본 템플릿 메타 편집 모달 */}
+      {editingSystemKind && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}
+          onClick={(e) => e.target === e.currentTarget && setEditingSystemKind(null)}
         >
           <form
-            onSubmit={handleSubmit}
+            onSubmit={handleEditSystemSubmit}
             onClick={(e) => e.stopPropagation()}
-            style={{ width: '100%', maxWidth: 420, maxHeight: '90vh', overflow: 'auto', background: 'var(--color-surface)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)', padding: 24 }}
+            style={{ width: '100%', maxWidth: 420, background: 'var(--color-surface)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)', padding: 24 }}
           >
-            <h2 style={{ margin: '0 0 20px', fontSize: 22, fontWeight: 600 }}>
-              {editingProjectId ? '프로젝트 편집' : '새 프로젝트 등록'}
-            </h2>
+            <h2 style={{ margin: '0 0 20px', fontSize: 22, fontWeight: 600 }}>기본 템플릿 편집 ({editingSystemKind === 'krds' ? 'KRDS' : 'MXDS'})</h2>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 500, color: 'var(--color-text-muted)' }}>프로젝트 이름</label>
+              <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 500, color: 'var(--color-text-muted)' }}>이름</label>
               <input
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="프로젝트 이름"
-                autoFocus
+                value={editSystemName}
+                onChange={(e) => setEditSystemName(e.target.value)}
                 style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', fontSize: 14, boxSizing: 'border-box' }}
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 500, color: 'var(--color-text-muted)' }}>설명</label>
+              <textarea
+                value={editSystemDescription}
+                onChange={(e) => setEditSystemDescription(e.target.value)}
+                rows={3}
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', fontSize: 14, boxSizing: 'border-box', resize: 'vertical' }}
               />
             </div>
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 500, color: 'var(--color-text-muted)' }}>비주얼 이미지</label>
               <input
-                ref={fileInputRef}
+                ref={systemCoverInputRef}
                 type="file"
                 accept="image/*"
                 style={{ display: 'none' }}
-                onChange={handleImageChange}
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) {
+                    const r = new FileReader()
+                    r.onload = () => setEditSystemCoverImage(r.result as string)
+                    r.readAsDataURL(f)
+                  }
+                  e.target.value = ''
+                }}
               />
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()}>
-                  이미지 선택
-                </Button>
-                {coverImage && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 80, height: 80, borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
-                      <img src={coverImage} alt="미리보기" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                    <Button type="button" variant="ghost" size="s" onClick={() => setCoverImage(null)}>
-                      이미지 제거
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-            {!editingProjectId && bookmarkGuideProjects.length > 0 && (
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500, color: 'var(--color-text-muted)' }}>
-                  가이드 불러오기 (파일 구조·리소스·카테고리·컴포넌트 그대로 복사)
-                </label>
-                <div style={{ maxHeight: 160, overflow: 'auto', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', padding: 8, background: 'var(--color-bg)' }}>
-                  {bookmarkGuideProjects.map((proj) => (
-                    <label
-                      key={proj.id}
-                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', cursor: 'pointer', fontSize: 14 }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedGuideIds.includes(proj.id)}
-                        onChange={() => toggleGuide(proj.id)}
-                      />
-                      <span>{proj.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 500, color: 'var(--color-text-muted)' }}>참여자 (여러 명)</label>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                <input
-                  type="text"
-                  value={newParticipant}
-                  onChange={(e) => setNewParticipant(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addParticipant())}
-                  placeholder="이름 입력 후 추가"
-                  style={{ flex: 1, minWidth: 0, padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', fontSize: 14 }}
-                />
-                <Button type="button" variant="secondary" onClick={addParticipant}>
-                  추가
-                </Button>
-              </div>
-              {participants.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {participants.map((p, i) => (
-                    <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: 'rgba(37,99,235,0.1)', borderRadius: 999, fontSize: 14 }}>
-                      {p}
-                      <button
-                        type="button"
-                        onClick={() => removeParticipant(i)}
-                        style={{ padding: 0, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 14 }}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
+              <Button type="button" variant="secondary" onClick={() => systemCoverInputRef.current?.click()}>이미지 선택</Button>
+              {editSystemCoverImage && (
+                <Button type="button" variant="ghost" size="s" onClick={() => setEditSystemCoverImage(null)} style={{ marginLeft: 8 }}>제거</Button>
               )}
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <Button type="button" variant="ghost" onClick={handleCancel}>
-                취소
-              </Button>
-              <Button type="submit" variant="primary">
-                {editingProjectId ? '저장' : '등록'}
-              </Button>
+              <Button type="button" variant="ghost" onClick={() => setEditingSystemKind(null)}>취소</Button>
+              <Button type="submit" variant="primary">저장</Button>
             </div>
           </form>
         </div>
       )}
 
-      {projects.length === 0 && !showForm ? (
-        <div style={{ padding: 48, textAlign: 'center', background: 'var(--color-surface)', borderRadius: 'var(--radius)', border: '1px dashed var(--color-border)' }}>
-          <p style={{ margin: '0 0 16px', fontSize: 15, color: 'var(--color-text-muted)' }}>등록된 프로젝트가 없습니다.</p>
-          <Button variant="primary" onClick={() => setShowForm(true)}>
-            첫 프로젝트 만들기
-          </Button>
-        </div>
-      ) : (
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-          {projects.map((p) => (
-            <li key={p.id}>
-              <div style={{ width: '100%', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)', overflow: 'hidden', position: 'relative' }}>
-                <button
-                  type="button"
-                  onClick={() => handleOpenProject(p.id)}
-                  style={{ width: '100%', padding: 0, textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer' }}
-                  onMouseEnter={(e) => {
-                    const card = e.currentTarget.closest('li')?.querySelector('[data-card-body]') as HTMLElement
-                    if (card) {
-                      card.style.borderColor = 'var(--color-primary)'
-                      card.style.background = 'rgba(37,99,235,0.04)'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    const card = e.currentTarget.closest('li')?.querySelector('[data-card-body]') as HTMLElement
-                    if (card) {
-                      card.style.borderColor = ''
-                      card.style.background = ''
-                    }
-                  }}
-                >
-                  <div
-                    data-card-body
-                    style={{ width: '100%', border: '1px solid transparent', borderRadius: 'var(--radius)', transition: 'border-color .15s, background .15s' }}
-                  >
-                    <div
-                      style={{
-                        width: '100%',
-                        height: 160,
-                        background: p.coverImage ? `url(${p.coverImage}) center/cover` : 'linear-gradient(135deg, var(--color-bg) 0%, var(--color-border) 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {!p.coverImage && <span style={{ fontSize: 48, color: 'var(--color-text-muted)', opacity: 0.5 }}>📁</span>}
-                    </div>
-                    <div style={{ padding: 16 }}>
-                      <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <StarIcon
-                          filled={p.isBookmarkGuide ?? false}
-                          onClick={() => updateProjectMeta(p.id, { isBookmarkGuide: !p.isBookmarkGuide })}
-                        />
-                        {p.name}
-                      </div>
-                      {p.participants && p.participants.length > 0 ? (
-                        <div style={{ fontSize: 14, color: 'var(--color-text-muted)', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                          {p.participants.map((who, i) => (
-                            <span key={i} style={{ padding: '2px 8px', background: 'rgba(37,99,235,0.08)', borderRadius: 4, fontSize: 14 }}>
-                              {who}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <div style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>참여자 없음</div>
-                      )}
-                    </div>
-                  </div>
-                </button>
-                <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="s"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      openEditForm(p)
+      {/* 프로젝트 편집 모달 (내 프로젝트·내 템플릿) */}
+      {editingProjectId && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24 }}
+          onClick={(e) => e.target === e.currentTarget && setEditingProjectId(null)}
+        >
+          <form
+            onSubmit={handleEditSubmit}
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 420, background: 'var(--color-surface)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)', padding: 24 }}
+          >
+            <h2 style={{ margin: '0 0 20px', fontSize: 22, fontWeight: 600 }}>프로젝트 편집</h2>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 500, color: 'var(--color-text-muted)' }}>이름</label>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', fontSize: 14, boxSizing: 'border-box' }}
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 500, color: 'var(--color-text-muted)' }}>비주얼 이미지</label>
+              <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) { const r = new FileReader(); r.onload = () => setEditCoverImage(r.result as string); r.readAsDataURL(f) }; e.target.value = '' }} />
+              <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()}>이미지 선택</Button>
+              {editCoverImage && <Button type="button" variant="ghost" size="s" onClick={() => setEditCoverImage(null)} style={{ marginLeft: 8 }}>제거</Button>}
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 500, color: 'var(--color-text-muted)' }}>참여자</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)', background: 'var(--color-bg)' }}>
+                {editParticipants.map((name) => (
+                  <span
+                    key={name}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 8px', background: 'rgba(37,99,235,0.12)', borderRadius: 6, fontSize: 13,
                     }}
                   >
-                    편집
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="s"
-                    onClick={(e) => handleDeleteProject(e, p.id, p.name)}
-                    title="프로젝트 삭제"
-                    style={{ color: 'var(--color-text-muted)' }}
-                  >
-                    삭제
-                  </Button>
-                </div>
+                    {name}
+                    <button
+                      type="button"
+                      onClick={() => removeEditParticipant(name)}
+                      style={{ padding: 0, margin: 0, border: 'none', background: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: 14, lineHeight: 1 }}
+                      aria-label={`${name} 제거`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                <input
+                  type="text"
+                  value={editParticipantInput}
+                  onChange={(e) => setEditParticipantInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addEditParticipant() } }}
+                  placeholder="이름 입력 후 Enter"
+                  style={{ flex: 1, minWidth: 120, padding: '4px 0', border: 'none', background: 'none', fontSize: 14, outline: 'none', color: 'var(--color-text)' }}
+                />
               </div>
-            </li>
-          ))}
-        </ul>
+              <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>여러 명을 추가할 수 있습니다. 입력 후 Enter를 누르세요.</p>
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  if (!window.confirm(`"${editName}"을(를) 삭제할까요?`)) return
+                  removeProject(editingProjectId)
+                  setEditingProjectId(null)
+                  navigate('/projects')
+                }}
+                style={{ color: 'var(--color-text-muted)' }}
+              >
+                삭제
+              </Button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Button type="button" variant="ghost" onClick={() => setEditingProjectId(null)}>취소</Button>
+                <Button type="submit" variant="primary">저장</Button>
+              </div>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   )

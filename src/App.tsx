@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { HashRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
+import { useGuideStore } from '@/store'
 import { MainLayout } from '@/layouts/MainLayout'
 import { ProjectListPage } from '@/features/projects/ProjectListPage'
 import { GuidePage } from '@/features/guide/GuidePage'
@@ -32,9 +33,18 @@ function StorageFailureListener() {
   return null
 }
 
+function SystemTemplatesLoader() {
+  const loadSystemTemplatesFromData = useGuideStore((s) => s.loadSystemTemplatesFromData)
+  useEffect(() => {
+    loadSystemTemplatesFromData()
+  }, [loadSystemTemplatesFromData])
+  return null
+}
+
 export default function App() {
   return (
     <HashRouter>
+      <SystemTemplatesLoader />
       <StorageFailureListener />
       <Routes>
         <Route path="/" element={<Navigate to="/projects" replace />} />

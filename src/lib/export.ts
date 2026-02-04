@@ -335,8 +335,8 @@ function dataUrlToUint8Array(dataUrl: string): Uint8Array | null {
 }
 
 /**
- * 파일 트리 구조대로 전체를 ZIP으로 다운로드
- * fileTree가 있어야 하며, index.html / component.css / component.js / 이미지가 경로에 맞게 포함됨
+ * 실제 물리 파일이 생성되는 유일한 경로: fileTree 기준으로 ZIP 다운로드.
+ * 그 외 미리보기/가이드 화면은 가상 파일 트리·데이터 구조만 사용하며 파일 생성 없음.
  */
 export async function downloadGuideAsZip(
   components: ComponentItem[],

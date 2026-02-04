@@ -31,12 +31,12 @@ export type GuideState = {
   components: ComponentItem[]
 }
 
-/** 공통 CSS/JS 파일 (reset.css, font.css, swiper.js 등) */
+/** 공통 CSS/JS/HTML 파일 (reset.css, font.css, swiper.js, 컴포넌트용 html 등) */
 export interface CommonFile {
   id: string
   name: string
   content: string
-  type: 'css' | 'js'
+  type: 'css' | 'js' | 'html'
 }
 
 /** 공통 리소스 - 파일 업로드로 등록한 이미지/폰트 등 (data URL 저장) */
@@ -76,21 +76,30 @@ export interface FileNode {
 /** 삭제 불가 기본 파일명 */
 export const PROTECTED_FILE_NAMES = ['component.css', 'component.js', 'index.html'] as const
 
-/** 프로젝트 단위 가이드 (컴포넌트·카테고리·공통 리소스) */
+/** 프로젝트/템플릿 구분 */
+export type ProjectType = 'systemTemplate' | 'editableTemplate' | 'userTemplate' | 'project'
+
+/** 프로젝트 단위 가이드 (컴포넌트·공통 리소스·파일트리) - systemTemplate / editableTemplate / userTemplate / project 공통 구조 */
 export interface Project {
   id: string
   name: string
+  /** 설명 (템플릿/프로젝트 소개) */
+  description?: string
+  /** systemTemplate: data/templates 읽기 전용 시드 | editableTemplate: KRDS/MXDS 편집용 복사본(localStorage) | userTemplate: 사용자 저장 템플릿 | project: 작업용 프로젝트 */
+  type: ProjectType
+  /** 생성 시각 (ms) */
+  createdAt?: number
   /** 비주얼/커버 이미지 (data URL) */
   coverImage?: string
   /** 참여자 명 (여러 명) */
   participants?: string[]
-  /** 북마크 가이드로 등록 여부 (별 아이콘, 새 프로젝트 생성 시 템플릿으로 선택 가능) */
+  /** 북마크 가이드로 등록 여부 (별 아이콘, 새 프로젝트 생성 시 템플릿으로 선택 가능) - project 전용 */
   isBookmarkGuide?: boolean
   /** 다운로드 시 사용할 CSS/JS/이미지 경로 (비우면 기본값 사용) */
   exportPaths?: ExportPaths
   /** 내보내기 경로 트리 (폴더 목록) - 리소스별로 놓일 폴더 선택 */
   exportPathTree?: ExportPathNode[]
-  /** 파일 트리 기반 구조 (있으면 경로 해석에 사용) */
+  /** 가상 파일 트리 (WebContent/components, css, js 등). 실제 디스크 파일 없음. ZIP 다운로드 시에만 물리 파일 생성 */
   fileTree?: FileNode[]
   components: ComponentItem[]
   categories: string[]

@@ -29,7 +29,7 @@ function verifyFileTreeMatchesResources(
   const treePaths = new Set(getAllFilePaths(tree))
   const expected: string[] = []
   for (const f of commonFiles) {
-    const folderName = f.type === 'css' ? 'css' : 'js'
+    const folderName = f.type === 'html' ? 'components' : f.type === 'css' ? 'css' : 'js'
     const folder = getFolderByName(tree, folderName)
     if (folder) {
       const dirPath = getNodePath(tree, folder.id)
@@ -61,6 +61,7 @@ export function FileStructurePage() {
   const removeFileNode = useGuideStore((s) => s.removeFileNode)
   const moveFileNodeStore = useGuideStore((s) => s.moveFileNode)
   const syncCommonResourcesToFileTree = useGuideStore((s) => s.syncCommonResourcesToFileTree)
+  const saveDefaultStructureToKrds = useGuideStore((s) => s.saveDefaultStructureToKrds)
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => getAllFolderIds(fileTree))
@@ -72,12 +73,12 @@ export function FileStructurePage() {
   function handleVerify() {
     const { match, missing } = verifyFileTreeMatchesResources(fileTree, commonFiles, commonAssets)
     if (match) {
-      alert('저장된 자료(공통 CSS/JS·에셋)와 파일 구조가 일치합니다.')
+      alert('가상 파일 트리와 공통 리소스(commonFiles·commonAssets)가 일치합니다.')
     } else {
       alert(
-        '파일 구조에 다음 경로가 없습니다.\n' +
+        '가상 파일 트리에 다음 경로가 없습니다.\n' +
           missing.map((p) => `· ${p}`).join('\n') +
-          '\n\n"동기화" 버튼을 누르면 공통 리소스 기준으로 파일 구조를 맞출 수 있습니다.'
+          '\n\n"동기화" 버튼으로 정합성을 맞출 수 있습니다. (실제 파일 생성 없음)'
       )
     }
   }
@@ -85,7 +86,7 @@ export function FileStructurePage() {
   function handleSync() {
     if (!projectId) return
     syncCommonResourcesToFileTree(projectId)
-    alert('공통 리소스 기준으로 파일 구조를 동기화했습니다.')
+    alert('가상 파일 트리(components/commonFiles/fileTree) 정합성을 맞춰 두었습니다. 실제 파일은 생성되지 않습니다.')
   }
 
   /** fileTree에 새 폴더가 추가되면 해당 폴더도 펼친 상태로 유지 */
@@ -101,11 +102,11 @@ export function FileStructurePage() {
     })
   }, [fileTree])
 
-  /** 파일 구조 페이지 진입 시 공통 리소스(CSS/JS/이미지)를 파일트리에 한 번 반영 (신규 추가는 addCommonFile/addCommonAsset에서 이미 반영됨) */
+  /** 파일 구조 페이지 진입 시 가상 파일 트리 정합성 유지 (프로젝트/내 템플릿만, 시스템 템플릿은 no-op) */
   useEffect(() => {
     if (!projectId) return
     syncCommonResourcesToFileTree(projectId)
-  }, [projectId])
+  }, [projectId, syncCommonResourcesToFileTree])
 
   if (!projectId || !project) {
     navigate('/projects', { replace: true })
@@ -211,7 +212,7 @@ export function FileStructurePage() {
         <div>
           <h2 className="lg-page-title">파일 구조</h2>
           <p className="lg-page-desc">
-            프로젝트 파일 구조·경로 기준점만 관리합니다. 편집은 컴포넌트 에디터·공통 리소스에서 합니다.
+            프로젝트 파일 구조·경로 기준점만 관리합니다. 편집은 컴포넌트 에디터·공통 리소스에서 합니다. 파일 구조가 변경되면 리소스 재등록이 필요합니다.
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -225,6 +226,18 @@ export function FileStructurePage() {
           >
             동기화
           </Button>
+          {projectId === 'krds' && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                saveDefaultStructureToKrds()
+                alert('KRDS 프로젝트에 기본 구조(WebContent/css, js, img, index.html + 리소스)가 저장되었습니다.')
+              }}
+              title="현재 기본 구조와 공동 리소스를 KRDS 편집본에 저장"
+            >
+              이 구조를 KRDS에 저장
+            </Button>
+          )}
           <Button
             variant="primary"
             onClick={handleDownloadZip}
