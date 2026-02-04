@@ -11,7 +11,6 @@ const CARD_GRID_STYLE: React.CSSProperties = { listStyle: 'none', margin: 0, pad
 const BASE = (import.meta.env.BASE_URL ?? '/').replace(/\/*$/, '') + '/'
 const KRDS_COVER = `${BASE}logos/krds-cover.png`
 const MXDS_COVER = `${BASE}logos/mxds-cover.png`
-const KRDS_COLOR = '#256ef4'
 
 const CUSTOM_THUMB_URLS = [1, 2, 3, 4, 5].map((i) => `${BASE}logos/custom-thumb-${i}.png`)
 const CUSTOM_THUMB_FOR_MODAL = CUSTOM_THUMB_URLS[2]
