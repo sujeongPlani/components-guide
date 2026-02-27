@@ -61,7 +61,7 @@
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  background: var(--color-surface);
+  background: #fff;
   color: var(--color-text-muted);
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
@@ -137,7 +137,7 @@
 .lg-card-wrap {
   display: flex;
   flex-direction: column;
-  background: var(--color-surface);
+  background: #fff;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -316,7 +316,7 @@
   padding: 8px 12px;
   border: none;
   border-top: none;
-  background: var(--color-surface);
+  background: #fff;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   opacity: 0;
@@ -382,7 +382,7 @@
   flex-shrink: 0;
   padding: 12px 24px;
   border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: #fff;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -485,7 +485,7 @@
   flex-shrink: 0;
   display: flex;
   border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: #fff;
 }
 
 .lg-code-tab {
@@ -551,7 +551,7 @@
 .lg-modal-box {
   width: 100%;
   max-width: 420px;
-  background: var(--color-surface);
+  background: #fff;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 24px;
@@ -569,7 +569,7 @@
   flex-shrink: 0;
   padding: 12px 24px;
   border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -589,7 +589,7 @@
   flex-shrink: 0;
   border-right: 1px solid var(--color-border);
   padding: 16px;
-  background: var(--color-surface);
+  background: #fff;
   display: flex;
   flex-direction: column;
 }
@@ -631,7 +631,7 @@
 .lg-sidebar {
   width: 260px;
   min-width: 260px;
-  background: var(--color-surface);
+  background: #fff;
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
@@ -669,7 +669,7 @@
 
 .lg-sidebar-app-logo:hover {
   color: var(--color-primary);
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(37, 99, 235, 0.1);
 }
 
 .lg-sidebar-project-name {
@@ -710,7 +710,7 @@
 }
 
 .lg-sidebar-settings-btn:hover {
-  background: rgba(37, 99, 235, 0.06);
+  background: rgba(37, 99, 235, 0.1);
 }
 
 .lg-sidebar-settings-btn--open {
@@ -728,7 +728,7 @@
   margin-top: 4px;
   min-width: 160px;
   padding: 4px;
-  background: var(--color-surface);
+  background: #fff;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -750,7 +750,7 @@
 }
 
 .lg-sidebar-dropdown-item:hover {
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(37, 99, 235, 0.1);
 }
 
 .lg-sidebar-search {
@@ -803,7 +803,7 @@
 }
 
 .lg-sidebar-cat-btn:hover {
-  background: rgba(37, 99, 235, 0.06);
+  background: rgba(37, 99, 235, 0.1);
 }
 
 .lg-sidebar-cat-btn--active {
@@ -829,7 +829,7 @@
 }
 
 .lg-sidebar-cat-item:hover {
-  background: rgba(37, 99, 235, 0.06);
+  background: rgba(37, 99, 235, 0.1);
 }
 
 .lg-sidebar-cat-item--selected {
@@ -843,7 +843,7 @@
 }
 
 .lg-sidebar-cat-item--drag-over {
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(37, 99, 235, 0.1);
 }
 
 .lg-sidebar-cat-count {
@@ -862,7 +862,7 @@
 .lg-page-header {
   padding: 12px 24px;
   border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -892,7 +892,7 @@
 .lg-tabs {
   display: flex;
   border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: #fff;
   padding: 0 16px;
 }
 
@@ -930,7 +930,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   font-size: 14px;
-  background: var(--color-surface);
+  background: #fff;
   font-family: inherit;
 }
 
@@ -945,7 +945,7 @@
 /* ---------- 카드/패널 ---------- */
 .lg-card {
   padding: 16px;
-  background: var(--color-surface);
+  background: #fff;
   border-radius: var(--radius);
   border: 1px solid var(--color-border);
 }
@@ -1014,7 +1014,7 @@
 .lg-assets-card {
   display: flex;
   flex-direction: column;
-  background: var(--color-surface);
+  background: #fff;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   overflow: hidden;
@@ -1200,7 +1200,7 @@
 }
 
 .lg-code {
-  background: var(--color-surface);
+  background: #fff;
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -1279,7 +1279,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: var(--color-surface);
+  background: #fff;
   cursor: pointer;
 }
 
@@ -1347,7 +1347,7 @@
 .lg-modal-form {
   width: 100%;
   max-width: 420px;
-  background: var(--color-surface);
+  background: #fff;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 24px;
@@ -1430,7 +1430,7 @@
 .lg-empty-state {
   padding: 48px;
   text-align: center;
-  background: var(--color-surface);
+  background: #fff;
   border-radius: var(--radius);
   border: 1px dashed var(--color-border);
 }
@@ -1452,7 +1452,7 @@
 
 .lg-project-card {
   width: 100%;
-  background: var(--color-surface);
+  background: #fff;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -1479,7 +1479,7 @@
 /* 버튼 호버 시 내부 카드 강조 (원래 인라인 onMouseEnter/Leave 동작과 동일) */
 .lg-project-card-btn:hover .lg-project-card-body {
   border-color: var(--color-primary);
-  background: rgba(37, 99, 235, 0.04);
+  background: rgba(37, 99, 235, 0.1);
 }
 
 .lg-project-card-cover {
@@ -1520,7 +1520,7 @@
 
 .lg-project-card-tag {
   padding: 2px 8px;
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(37, 99, 235, 0.1);
   border-radius: 4px;
   font-size: 14px;
 }
@@ -1594,7 +1594,7 @@
   min-width: 220px;
   border-right: 1px solid var(--color-border);
   padding: 16px;
-  background: var(--color-surface);
+  background: #fff;
 }
 
 .lg-share-nav {
@@ -1659,7 +1659,7 @@
 }
 
 .lg-tree-row--over {
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(37, 99, 235, 0.1);
 }
 
 .lg-tree-row--dragging {
@@ -1725,7 +1725,7 @@
   z-index: 1000;
   min-width: 140px;
   padding: 4px;
-  background: var(--color-surface);
+  background: #fff;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -1754,7 +1754,7 @@
   align-items: center;
   gap: 6px;
   padding: 4px 12px;
-  background: var(--color-surface);
+  background: #fff;
   border: 2px dashed var(--color-primary);
   border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -1829,7 +1829,7 @@
 
 /* ---------- ComponentCard ---------- */
 .lg-component-card {
-  background: var(--color-surface);
+  background: #fff;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -1985,7 +1985,7 @@
 .lg-editor-tab-list {
   display: flex;
   border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: #fff;
 }
 
 .lg-editor-tab {
@@ -2211,6 +2211,6 @@
 }
 
 .lg-logout-btn:hover {
-  background: rgba(30, 58, 95, 0.06) !important;
-  border-color: #c4c8cc !important;
+  background: rgba(37, 99, 235, 0.1) !important;
+  border-color: var(--color-border) !important;
 }

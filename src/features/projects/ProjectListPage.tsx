@@ -312,8 +312,8 @@ export function ProjectListPage() {
 
       {/* 1) 기본 템플릿 */}
       <section style={SECTION_STYLE}>
-        <h2 style={{ ...SECTION_TITLE_STYLE, fontSize: 20, color: 'var(--color-text)', borderBottom: '2px solid var(--color-primary)', paddingBottom: 8 }}>
-          Template
+        <h2 style={{ ...SECTION_TITLE_STYLE, fontSize: 22, color: 'var(--color-text)' }}>
+          📋 Template
         </h2>
         <ul style={CARD_GRID_STYLE}>
           {systemTemplates.map((p, idx) => (
@@ -338,7 +338,7 @@ export function ProjectListPage() {
       {/* 2) 내 템플릿 */}
       {userTemplates.length > 0 && (
         <section style={SECTION_STYLE}>
-          <h2 style={{ ...SECTION_TITLE_STYLE, fontSize: 20, color: 'var(--color-text)', paddingBottom: 4 }}>My Template</h2>
+          <h2 style={{ ...SECTION_TITLE_STYLE, fontSize: 22, color: 'var(--color-text)' }}>🗂️ My Template</h2>
           <ul style={CARD_GRID_STYLE}>
             {userTemplates.map((p) => (
               <ProjectCard
@@ -361,7 +361,7 @@ export function ProjectListPage() {
 
       {/* 3) 내 프로젝트 */}
       <section style={SECTION_STYLE}>
-        <h2 style={{ ...SECTION_TITLE_STYLE, fontSize: 20, color: 'var(--color-text)', borderBottom: '2px solid var(--color-primary)', paddingBottom: 8 }}>My Project</h2>
+        <h2 style={{ ...SECTION_TITLE_STYLE, fontSize: 22, color: 'var(--color-text)' }}>📁 My Project</h2>
         {userProjects.length === 0 ? (
           <div style={{ padding: 48, textAlign: 'center', background: 'var(--color-surface)', borderRadius: 'var(--radius)', border: '1px dashed var(--color-border)' }}>
             <p style={{ margin: '0 0 16px', fontSize: 15, color: 'var(--color-text-muted)' }}>등록된 프로젝트가 없습니다.</p>
