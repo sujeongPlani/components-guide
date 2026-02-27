@@ -57,13 +57,18 @@ function SupabaseSync() {
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return
-
+    if (!isSupabaseConfigured) {
+      console.log('[Supabase] .env에 VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY가 없어 DB 동기화를 쓰지 않습니다. (로컬만 사용)')
+      return
+    }
+    console.log('[Supabase] DB 연동 사용 중 – 프로젝트 변경 시 약 1.5초 후 자동 저장됩니다.')
     skipNextSync.current = true
-    loadProjectsFromSupabase().then(() => {
-      const projects = useGuideStore.getState().projects
-      previousProjectIds.current = projects.filter((p) => p.type === 'project').map((p) => p.id)
-    })
+    loadProjectsFromSupabase()
+      .then(() => {
+        const projects = useGuideStore.getState().projects
+        previousProjectIds.current = projects.filter((p) => p.type === 'project').map((p) => p.id)
+      })
+      .catch((e) => console.error('[Supabase] 프로젝트 목록 불러오기 실패', e))
   }, [loadProjectsFromSupabase])
 
   useEffect(() => {
@@ -84,14 +89,18 @@ function SupabaseSync() {
         const currentIds = projectItems.map((p) => p.id)
         const previous = previousProjectIds.current
 
-        for (const id of previous) {
-          if (!currentIds.includes(id)) await deleteProjectFromSupabase(id).catch(() => {})
+        try {
+          for (const id of previous) {
+            if (!currentIds.includes(id)) await deleteProjectFromSupabase(id).catch((e) => console.error('[Supabase] 삭제 실패', id, e))
+          }
+          for (const p of projectItems) {
+            await saveProjectToSupabase(p).catch((e) => console.error('[Supabase] 저장 실패', p.name, e))
+          }
+          previousProjectIds.current = projectItems.map((p) => p.id)
+        } catch (e) {
+          console.error('[Supabase] 동기화 중 오류', e)
         }
-        for (const p of projectItems) {
-          await saveProjectToSupabase(p).catch(() => {})
-        }
-        previousProjectIds.current = projectItems.map((p) => p.id)
-      }, 2000)
+      }, 1500)
     })
 
     return () => {

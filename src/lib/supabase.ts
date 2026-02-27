@@ -5,8 +5,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Project } from '@/store/types'
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+// 공백·BOM·줄바꿈 제거. 키는 ASCII만 사용 (헤더 "non ISO-8859-1" 오류 방지)
+const _rawUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim()
+const url = _rawUrl?.replace(/\s|\uFEFF/g, '') || undefined
+const _rawKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim()
+const key = _rawKey ? _rawKey.replace(/[\s\uFEFF]/g, '').replace(/[^\x20-\x7E]/g, '') : undefined
 
 export const isSupabaseConfigured = Boolean(url && key)
 
