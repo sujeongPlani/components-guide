@@ -5,7 +5,18 @@ import { DEFAULT_CATEGORIES } from './types'
 import { createDefaultFileTree, isProtectedNode, ensureFileUnderFolder, ensureFileUnderFolderById, ensureFolderUnderRoot, findFileInFolder } from '@/lib/fileTree'
 import { getKrdsSeedProject, getMxdsSeedProject } from '@/data/krds-seed'
 import { fetchSystemTemplateJson } from '@/lib/systemTemplates'
-import { fetchProjectsFromSupabase } from '@/lib/supabase'
+import {
+  fetchProjectsFromSupabase,
+  fetchEditableTemplatesFromSupabase,
+  fetchTemplateComponentsFromSupabase,
+  isSupabaseConfigured,
+  saveProjectToSupabase,
+  saveEditableTemplateToSupabase,
+  saveTemplateComponentsToSupabase,
+  deleteProjectFromSupabase,
+  deleteEditableTemplateFromSupabase,
+  deleteTemplateComponentsFromSupabase,
+} from '@/lib/supabase'
 
 /** 컴포넌트에서 파생된 commonFiles/fileTree 항목(저장 불필요). 제거·동기화 제외용 */
 const COMP_FILE_REGEX = /^comp-[a-f0-9-]+\.(html|css|js)$/
@@ -400,6 +411,10 @@ interface GuideStore {
   saveProjectAsTemplate: (projectId: string, templateName: string) => string
   /** Supabase에서 프로젝트 목록 불러와서 projects 치환 (env 설정 시에만 사용) */
   loadProjectsFromSupabase: () => Promise<void>
+  /** 프로젝트 변경 시 DB 동기화 (type project만, Supabase 설정 시에만). 액션 내부에서 호출용 */
+  syncProjectToSupabase: (projectId: string) => Promise<void>
+  /** KRDS/MXDS 편집본 변경 시 DB 동기화. 액션 내부에서 호출용 */
+  syncEditableTemplateToSupabase: (kind: 'krds' | 'mxds') => Promise<void>
 }
 
 export type { SystemTemplateMetaOverrides }
@@ -449,12 +464,21 @@ export const useGuideStore = create<GuideStore>()(
         return result
       },
 
-      resetEditableTemplate: (kind) =>
+      resetEditableTemplate: (kind) => {
         set((state) => ({
           editableTemplates: { ...state.editableTemplates, [kind]: undefined },
-        })),
+        }))
+        if (isSupabaseConfigured) {
+          deleteEditableTemplateFromSupabase(kind).catch((e) =>
+            console.error('[Supabase] 편집 템플릿 삭제 실패', kind, e)
+          )
+          deleteTemplateComponentsFromSupabase(kind).catch((e) =>
+            console.error('[Supabase] template_components 삭제 실패', kind, e)
+          )
+        }
+      },
 
-      saveDefaultStructureToKrds: () =>
+      saveDefaultStructureToKrds: () => {
         set((state) => {
           const restored = getKrdsSeedResourcesRestored()
           const current = state.editableTemplates?.krds
@@ -479,7 +503,9 @@ export const useGuideStore = create<GuideStore>()(
             ...state,
             editableTemplates: { ...state.editableTemplates, krds: next },
           }
-        }),
+        })
+        get().syncEditableTemplateToSupabase('krds').catch(() => {})
+      },
 
       setSystemTemplateMeta: (kind: 'krds' | 'mxds', partial: { name?: string; description?: string; coverImage?: string }) =>
         set((state) => ({
@@ -529,6 +555,7 @@ export const useGuideStore = create<GuideStore>()(
             }
           }),
         }))
+        get().syncProjectToSupabase(targetProjectId).catch(() => {})
       },
 
       addProject: (name, options) => {
@@ -537,6 +564,7 @@ export const useGuideStore = create<GuideStore>()(
         if (options?.selectedGuideIds?.length) {
           get().copyFromProjectsIntoProject(project.id, options.selectedGuideIds)
         }
+        get().syncProjectToSupabase(project.id).catch(() => {})
         return project.id
       },
 
@@ -571,6 +599,7 @@ export const useGuideStore = create<GuideStore>()(
           isBookmarkGuide: false,
         }
         set((state) => ({ projects: [...state.projects, project] }))
+        get().syncProjectToSupabase(id).catch(() => {})
         return id
       },
 
@@ -587,6 +616,7 @@ export const useGuideStore = create<GuideStore>()(
         if (options?.coverImage) project.coverImage = options.coverImage
         if (options?.participants?.length) project.participants = options.participants.filter(Boolean)
         set((state) => ({ projects: [...state.projects, project] }))
+        get().syncProjectToSupabase(project.id).catch(() => {})
         return project.id
       },
 
@@ -599,12 +629,80 @@ export const useGuideStore = create<GuideStore>()(
       },
 
       loadProjectsFromSupabase: async () => {
-        const projects = await fetchProjectsFromSupabase()
-        set({ projects })
+        const [projects, editableTemplatesFromDb, krdsComponents, mxdsComponents] = await Promise.all([
+          fetchProjectsFromSupabase(),
+          fetchEditableTemplatesFromSupabase(),
+          fetchTemplateComponentsFromSupabase('krds').catch(() => []),
+          fetchTemplateComponentsFromSupabase('mxds').catch(() => []),
+        ])
+        const krds =
+          editableTemplatesFromDb.krds != null
+            ? krdsComponents.length > 0
+              ? { ...editableTemplatesFromDb.krds, components: krdsComponents }
+              : editableTemplatesFromDb.krds
+            : undefined
+        const mxds =
+          editableTemplatesFromDb.mxds != null
+            ? mxdsComponents.length > 0
+              ? { ...editableTemplatesFromDb.mxds, components: mxdsComponents }
+              : editableTemplatesFromDb.mxds
+            : undefined
+        set((state) => ({
+          projects,
+          editableTemplates: {
+            ...state.editableTemplates,
+            ...(krds && { krds }),
+            ...(mxds && { mxds }),
+          },
+        }))
+        console.log(
+          '[Supabase] DB에서',
+          projects.length,
+          '개 프로젝트 불러옴',
+          '| KRDS/MXDS 편집본:',
+          Object.keys(editableTemplatesFromDb).length,
+          '개',
+          '| template_components: KRDS',
+          krdsComponents.length,
+          '개, MXDS',
+          mxdsComponents.length,
+          '개'
+        )
       },
 
-      removeProject: (id) =>
-        set((state) => ({ projects: state.projects.filter((p) => p.id !== id) })),
+      syncProjectToSupabase: async (projectId) => {
+        if (!isSupabaseConfigured) return
+        const project = get().projects.find((p) => p.id === projectId && p.type === 'project')
+        if (!project) return
+        try {
+          await saveProjectToSupabase(project)
+          console.log('[Supabase] 저장 완료:', project.name)
+        } catch (e) {
+          console.error('[Supabase] 저장 실패:', project.name, e)
+        }
+      },
+
+      syncEditableTemplateToSupabase: async (kind) => {
+        if (!isSupabaseConfigured) return
+        const project = get().editableTemplates?.[kind] ?? get().getSystemTemplates()[kind === 'krds' ? 0 : 1]
+        const toSave = { ...project, id: kind, type: 'editableTemplate' as const }
+        try {
+          await saveEditableTemplateToSupabase(kind, toSave)
+          await saveTemplateComponentsToSupabase(kind, toSave.components ?? [])
+          console.log('[Supabase] 편집 템플릿 저장 완료:', toSave.name)
+        } catch (e) {
+          console.error('[Supabase] 편집 템플릿 저장 실패:', kind, e)
+        }
+      },
+
+      removeProject: (id) => {
+        if (isSupabaseConfigured) {
+          deleteProjectFromSupabase(id).catch((e) =>
+            console.error('[Supabase] 삭제 실패', id, e?.message ?? e?.code ?? e)
+          )
+        }
+        set((state) => ({ projects: state.projects.filter((p) => p.id !== id) }))
+      },
 
       /** 데이터 가져오기: 백업 JSON의 projects를 정규화 후 스토어에 반영 */
       restoreFromBackup: (payload: { projects?: unknown[] }) => {
@@ -637,21 +735,25 @@ export const useGuideStore = create<GuideStore>()(
         set({ projects })
       },
 
-      updateProjectName: (id, name) =>
+      updateProjectName: (id, name) => {
         set((state) => ({
           projects: state.projects.map((p) =>
             p.id === id ? { ...p, name: name.trim() || p.name } : p
           ),
-        })),
+        }))
+        get().syncProjectToSupabase(id).catch(() => {})
+      },
 
-      updateProjectMeta: (id, partial) =>
+      updateProjectMeta: (id, partial) => {
         set((state) => ({
           projects: state.projects.map((p) =>
             p.id === id ? { ...p, ...partial } : p
           ),
-        })),
+        }))
+        get().syncProjectToSupabase(id).catch(() => {})
+      },
 
-      resetFileTreeToDefault: (projectId) =>
+      resetFileTreeToDefault: (projectId) => {
         set((state) => {
           const defaultTree = createDefaultFileTree()
           if (projectId === 'krds' || projectId === 'mxds') {
@@ -663,7 +765,10 @@ export const useGuideStore = create<GuideStore>()(
             ...state,
             projects: state.projects.map((p) => (p.id === projectId ? { ...p, fileTree: defaultTree } : p)),
           }
-        }),
+        })
+        if (projectId === 'krds' || projectId === 'mxds') get().syncEditableTemplateToSupabase(projectId).catch(() => {})
+        else get().syncProjectToSupabase(projectId).catch(() => {})
+      },
 
       addExportPathNode: (projectId, node, parentId) => {
         const newNode: ExportPathNode = {
@@ -686,6 +791,7 @@ export const useGuideStore = create<GuideStore>()(
             return { ...p, exportPathTree: inject(tree) }
           }),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
         return newNode.id
       },
 
@@ -697,6 +803,7 @@ export const useGuideStore = create<GuideStore>()(
             p.id === projectId ? { ...p, exportPathTree: remove(p.exportPathTree ?? []) } : p
           ),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
 
       updateExportPathNode: (projectId, nodeId, partial) => {
@@ -711,6 +818,7 @@ export const useGuideStore = create<GuideStore>()(
             p.id === projectId ? { ...p, exportPathTree: update(p.exportPathTree ?? []) } : p
           ),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
 
       reorderExportPathTree: (projectId, nodeIds) => {
@@ -724,6 +832,7 @@ export const useGuideStore = create<GuideStore>()(
             return ordered.length ? { ...p, exportPathTree: ordered } : p
           }),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
 
       addFileNode: (projectId, parentId, node) => {
@@ -754,6 +863,7 @@ export const useGuideStore = create<GuideStore>()(
               editableTemplates: { ...state.editableTemplates, [projectId]: { ...proj, fileTree: injectTree(tree) } },
             }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return newNode.id
         }
         set((state) => ({
@@ -763,6 +873,7 @@ export const useGuideStore = create<GuideStore>()(
             return { ...p, fileTree: injectTree(tree) }
           }),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
         return newNode.id
       },
 
@@ -783,6 +894,7 @@ export const useGuideStore = create<GuideStore>()(
               editableTemplates: { ...state.editableTemplates, [projectId]: { ...proj, fileTree: remove(proj.fileTree ?? []) } },
             }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return true
         }
         set((state) => ({
@@ -790,6 +902,7 @@ export const useGuideStore = create<GuideStore>()(
             p.id === projectId ? { ...p, fileTree: remove(p.fileTree ?? []) } : p
           ),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
         return true
       },
 
@@ -807,6 +920,7 @@ export const useGuideStore = create<GuideStore>()(
               editableTemplates: { ...state.editableTemplates, [projectId]: { ...proj, fileTree: update(proj.fileTree ?? []) } },
             }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return
         }
         set((state) => ({
@@ -814,6 +928,7 @@ export const useGuideStore = create<GuideStore>()(
             p.id === projectId ? { ...p, fileTree: update(p.fileTree ?? []) } : p
           ),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
 
       moveFileNode: (projectId, nodeId, targetParentId, targetIndex) => {
@@ -831,6 +946,7 @@ export const useGuideStore = create<GuideStore>()(
             if (!proj) return state
             return { ...state, editableTemplates: { ...state.editableTemplates, [projectId]: { ...proj, fileTree: newTree } } }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return true
         }
         set((state) => ({
@@ -838,6 +954,7 @@ export const useGuideStore = create<GuideStore>()(
             p.id === projectId ? { ...p, fileTree: newTree } : p
           ),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
         return true
       },
 
@@ -858,6 +975,7 @@ export const useGuideStore = create<GuideStore>()(
               editableTemplates: { ...state.editableTemplates, [projectId]: { ...proj, components } },
             }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return component.id
         }
         set((state) => {
@@ -872,6 +990,7 @@ export const useGuideStore = create<GuideStore>()(
             ),
           }
         })
+        get().syncProjectToSupabase(projectId).catch(() => {})
         return component.id
       },
 
@@ -889,11 +1008,13 @@ export const useGuideStore = create<GuideStore>()(
             if (!proj) return state
             return { ...state, editableTemplates: { ...state.editableTemplates, [projectId]: apply(proj) } }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return
         }
         set((state) => ({
           projects: state.projects.map((p) => (p.id !== projectId ? p : apply(p))),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
 
       removeComponent: (projectId, componentId) => {
@@ -922,6 +1043,7 @@ export const useGuideStore = create<GuideStore>()(
             if (!proj) return state
             return { ...state, editableTemplates: { ...state.editableTemplates, [projectId]: apply(proj) } }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return
         }
         set((state) => {
@@ -931,6 +1053,7 @@ export const useGuideStore = create<GuideStore>()(
             projects: state.projects.map((p) => (p.id === projectId ? apply(p) : p)),
           }
         })
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
 
       getComponent: (projectId, componentId) => {
@@ -945,11 +1068,13 @@ export const useGuideStore = create<GuideStore>()(
             if (!proj) return state
             return { ...state, editableTemplates: { ...state.editableTemplates, [projectId]: { ...proj, components } } }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return
         }
         set((state) => ({
           projects: state.projects.map((p) => (p.id === projectId ? { ...p, components } : p)),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
 
       addCategory: (projectId, name) => {
@@ -968,6 +1093,7 @@ export const useGuideStore = create<GuideStore>()(
               editableTemplates: { ...state.editableTemplates, [projectId]: { ...proj, categories: [...proj.categories, trimmed] } },
             }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return
         }
         set((state) => ({
@@ -976,6 +1102,7 @@ export const useGuideStore = create<GuideStore>()(
             return { ...p, categories: [...p.categories, trimmed] }
           }),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
 
       reorderCategories: (projectId, orderedNames) => {
@@ -990,6 +1117,7 @@ export const useGuideStore = create<GuideStore>()(
               editableTemplates: { ...state.editableTemplates, [projectId]: { ...proj, categories: [...orderedNames, ...rest] } },
             }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return
         }
         set((state) => ({
@@ -1000,6 +1128,7 @@ export const useGuideStore = create<GuideStore>()(
             return { ...p, categories: [...orderedNames, ...rest] }
           }),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
       removeCategory: (projectId, name) => {
         if (projectId === 'krds' || projectId === 'mxds') {
@@ -1026,6 +1155,7 @@ export const useGuideStore = create<GuideStore>()(
               },
             }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return
         }
         set((state) => ({
@@ -1046,6 +1176,7 @@ export const useGuideStore = create<GuideStore>()(
             }
           }),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
 
       addCommonFile: (projectId, item) => {
@@ -1069,6 +1200,7 @@ export const useGuideStore = create<GuideStore>()(
               },
             }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return
         }
         set((state) => {
@@ -1082,6 +1214,7 @@ export const useGuideStore = create<GuideStore>()(
             ),
           }
         })
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
       removeCommonFile: (projectId, fileId) => {
         if (projectId === 'krds' || projectId === 'mxds') {
@@ -1096,6 +1229,7 @@ export const useGuideStore = create<GuideStore>()(
               },
             }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return
         }
         set((state) => ({
@@ -1103,6 +1237,7 @@ export const useGuideStore = create<GuideStore>()(
             p.id === projectId ? { ...p, commonFiles: p.commonFiles.filter((f) => f.id !== fileId) } : p
           ),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
       updateCommonFile: (projectId, fileId, partial) => {
         if (projectId === 'krds' || projectId === 'mxds') {
@@ -1120,6 +1255,7 @@ export const useGuideStore = create<GuideStore>()(
               },
             }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return
         }
         set((state) => ({
@@ -1129,6 +1265,7 @@ export const useGuideStore = create<GuideStore>()(
               : p
           ),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
 
       addCommonAsset: (projectId, item) => {
@@ -1152,6 +1289,7 @@ export const useGuideStore = create<GuideStore>()(
               },
             }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return
         }
         set((state) => {
@@ -1166,6 +1304,7 @@ export const useGuideStore = create<GuideStore>()(
             ),
           }
         })
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
       removeCommonAsset: (projectId, assetId) => {
         if (projectId === 'krds' || projectId === 'mxds') {
@@ -1180,6 +1319,7 @@ export const useGuideStore = create<GuideStore>()(
               },
             }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return
         }
         set((state) => ({
@@ -1187,6 +1327,7 @@ export const useGuideStore = create<GuideStore>()(
             p.id === projectId ? { ...p, commonAssets: p.commonAssets.filter((a) => a.id !== assetId) } : p
           ),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
       updateCommonAsset: (projectId, assetId, partial) => {
         if (projectId === 'krds' || projectId === 'mxds') {
@@ -1204,6 +1345,7 @@ export const useGuideStore = create<GuideStore>()(
               },
             }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return
         }
         set((state) => ({
@@ -1213,6 +1355,7 @@ export const useGuideStore = create<GuideStore>()(
               : p
           ),
         }))
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
 
       syncCommonResourcesToFileTree: (projectId) => {
@@ -1242,6 +1385,7 @@ export const useGuideStore = create<GuideStore>()(
               editableTemplates: { ...state.editableTemplates, [projectId]: { ...proj, fileTree: tree } },
             }
           })
+          get().syncEditableTemplateToSupabase(projectId).catch(() => {})
           return
         }
         set((state) => {
@@ -1266,17 +1410,21 @@ export const useGuideStore = create<GuideStore>()(
             projects: state.projects.map((p) => (p.id === projectId ? { ...p, fileTree: tree } : p)),
           }
         })
+        get().syncProjectToSupabase(projectId).catch(() => {})
       },
     }),
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => createSafeStorage()),
-      /** 프로젝트(컴포넌트·리소스 포함)만 localStorage에 저장. 함수 제외해 직렬화 안정 + 컴포넌트 누락 방지 */
-      partialize: (state) => ({
-        projects: state.projects,
-        systemTemplateMetaOverrides: state.systemTemplateMetaOverrides,
-        editableTemplates: state.editableTemplates,
-      }),
+      /** Supabase 사용 시: projects는 DB 단일 소스(localStorage에 저장·복원 안 함). 미사용 시에만 projects persist */
+      partialize: (state) =>
+        isSupabaseConfigured
+          ? { systemTemplateMetaOverrides: state.systemTemplateMetaOverrides, editableTemplates: state.editableTemplates }
+          : {
+              projects: state.projects,
+              systemTemplateMetaOverrides: state.systemTemplateMetaOverrides,
+              editableTemplates: state.editableTemplates,
+            },
       merge: (persisted, current) => {
         const raw = persisted != null && typeof persisted === 'object' && 'state' in persisted
           ? (persisted as { state: unknown }).state
@@ -1292,7 +1440,9 @@ export const useGuideStore = create<GuideStore>()(
         }
         const persistedProjects = Array.isArray(p?.projects) ? p.projects : undefined
         let projects: Project[]
-        if (Array.isArray(persistedProjects) && persistedProjects.length > 0) {
+        if (isSupabaseConfigured) {
+          projects = []
+        } else if (Array.isArray(persistedProjects) && persistedProjects.length > 0) {
           const mapped = persistedProjects.map((proj): Project | null => {
             const base = { ...proj } as Project
             const withComponents = Array.isArray(base.components)

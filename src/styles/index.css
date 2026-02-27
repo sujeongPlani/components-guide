@@ -24,9 +24,12 @@ html {
   font-size:10px;
 }
 
-html, body, #root {
+html, body {
   height: 100%;
   margin: 0;
+}
+#root {
+  margin:0;
 }
 
 /* 라우트/레이아웃이 뷰포트를 채우도록 높이 체인 */

@@ -1,12 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { HashRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { useGuideStore } from '@/store'
 import { AuthProvider } from '@/contexts/AuthContext'
-import {
-  isSupabaseConfigured,
-  saveProjectToSupabase,
-  deleteProjectFromSupabase,
-} from '@/lib/supabase'
+import { isSupabaseConfigured } from '@/lib/supabase'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { MainLayout } from '@/layouts/MainLayout'
 import { ProjectListPage } from '@/features/projects/ProjectListPage'
@@ -49,65 +45,18 @@ function SystemTemplatesLoader() {
   return null
 }
 
-/** Supabase 설정 시: 앱 로드 시 DB에서 프로젝트 불러오기, 변경 시 디바운스 후 DB에 저장 */
-function SupabaseSync() {
+/** Supabase 설정 시: 앱 시작 시 무조건 DB에서 프로젝트 로드(단일 진실 소스). 저장은 store 액션에서 직접 호출 */
+function SupabaseLoadOnMount() {
   const loadProjectsFromSupabase = useGuideStore((s) => s.loadProjectsFromSupabase)
-  const skipNextSync = useRef(true)
-  const previousProjectIds = useRef<string[]>([])
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
       console.log('[Supabase] .env에 VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY가 없어 DB 동기화를 쓰지 않습니다. (로컬만 사용)')
       return
     }
-    console.log('[Supabase] DB 연동 사용 중 – 프로젝트 변경 시 약 1.5초 후 자동 저장됩니다.')
-    skipNextSync.current = true
-    loadProjectsFromSupabase()
-      .then(() => {
-        const projects = useGuideStore.getState().projects
-        previousProjectIds.current = projects.filter((p) => p.type === 'project').map((p) => p.id)
-      })
-      .catch((e) => console.error('[Supabase] 프로젝트 목록 불러오기 실패', e))
+    console.log('[Supabase] DB 연동 사용 중 – 앱 시작 시 DB에서 불러옴, 프로젝트 변경 시 즉시 저장')
+    loadProjectsFromSupabase().catch((e) => console.error('[Supabase] 프로젝트 목록 불러오기 실패', e))
   }, [loadProjectsFromSupabase])
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) return
-
-    const unsub = useGuideStore.subscribe((state, prevState) => {
-      if (state.projects === prevState.projects) return
-      if (skipNextSync.current) {
-        skipNextSync.current = false
-        return
-      }
-
-      if (debounceTimer.current) clearTimeout(debounceTimer.current)
-      debounceTimer.current = setTimeout(async () => {
-        debounceTimer.current = null
-        const current = useGuideStore.getState().projects
-        const projectItems = current.filter((p) => p.type === 'project')
-        const currentIds = projectItems.map((p) => p.id)
-        const previous = previousProjectIds.current
-
-        try {
-          for (const id of previous) {
-            if (!currentIds.includes(id)) await deleteProjectFromSupabase(id).catch((e) => console.error('[Supabase] 삭제 실패', id, e))
-          }
-          for (const p of projectItems) {
-            await saveProjectToSupabase(p).catch((e) => console.error('[Supabase] 저장 실패', p.name, e))
-          }
-          previousProjectIds.current = projectItems.map((p) => p.id)
-        } catch (e) {
-          console.error('[Supabase] 동기화 중 오류', e)
-        }
-      }, 1500)
-    })
-
-    return () => {
-      unsub()
-      if (debounceTimer.current) clearTimeout(debounceTimer.current)
-    }
-  }, [])
 
   return null
 }
@@ -117,7 +66,7 @@ export default function App() {
     <HashRouter>
       <AuthProvider>
         <SystemTemplatesLoader />
-        <SupabaseSync />
+        <SupabaseLoadOnMount />
         <StorageFailureListener />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
