@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useGuideStore } from '@/store'
-import type { FileNode, CommonFile, CommonAsset } from '@/store/types'
+import type { FileNode } from '@/store/types'
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { createDefaultFileTree, getNodePath, isProtectedNode, getAllFilePaths, getFolderByName, getNodeById } from '@/lib/fileTree'
+import { createDefaultFileTree, getNodePath, isProtectedNode } from '@/lib/fileTree'
 import { downloadGuideAsZip } from '@/lib/export'
 import { FileTreePanel } from './FileTreePanel'
 
@@ -20,38 +20,6 @@ function getAllFolderIds(nodes: FileNode[]): Set<string> {
   return ids
 }
 
-/** 저장된 공통 리소스(commonFiles, commonAssets)가 파일 트리에 모두 반영돼 있는지 확인 */
-function verifyFileTreeMatchesResources(
-  tree: FileNode[],
-  commonFiles: CommonFile[],
-  commonAssets: CommonAsset[]
-): { match: boolean; missing: string[] } {
-  const treePaths = new Set(getAllFilePaths(tree))
-  const expected: string[] = []
-  for (const f of commonFiles) {
-    const folderName = f.type === 'html' ? 'components' : f.type === 'css' ? 'css' : 'js'
-    const folder = getFolderByName(tree, folderName)
-    if (folder) {
-      const dirPath = getNodePath(tree, folder.id)
-      if (dirPath) expected.push(`${dirPath}/${f.name}`)
-    }
-  }
-  for (const a of commonAssets) {
-    let dirPath: string | null = null
-    if (a.exportFolderId) {
-      const folder = getNodeById(tree, a.exportFolderId)
-      if (folder?.type === 'folder') dirPath = getNodePath(tree, a.exportFolderId)
-    }
-    if (dirPath == null) {
-      const imgFolder = getFolderByName(tree, 'img')
-      if (imgFolder) dirPath = getNodePath(tree, imgFolder.id)
-    }
-    if (dirPath) expected.push(`${dirPath}/${a.name}`)
-  }
-  const missing = expected.filter((p) => !treePaths.has(p))
-  return { match: missing.length === 0, missing }
-}
-
 export function FileStructurePage() {
   const { projectId } = useParams<{ projectId: string }>()
   const navigate = useNavigate()
@@ -60,33 +28,18 @@ export function FileStructurePage() {
   const addFileNode = useGuideStore((s) => s.addFileNode)
   const removeFileNode = useGuideStore((s) => s.removeFileNode)
   const moveFileNodeStore = useGuideStore((s) => s.moveFileNode)
-  const syncCommonResourcesToFileTree = useGuideStore((s) => s.syncCommonResourcesToFileTree)
+  const resetFileTreeToDefault = useGuideStore((s) => s.resetFileTreeToDefault)
   const saveDefaultStructureToKrds = useGuideStore((s) => s.saveDefaultStructureToKrds)
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => getAllFolderIds(fileTree))
   const [downloading, setDownloading] = useState(false)
 
-  const commonFiles = project?.commonFiles ?? []
-  const commonAssets = project?.commonAssets ?? []
-
-  function handleVerify() {
-    const { match, missing } = verifyFileTreeMatchesResources(fileTree, commonFiles, commonAssets)
-    if (match) {
-      alert('가상 파일 트리와 공통 리소스(commonFiles·commonAssets)가 일치합니다.')
-    } else {
-      alert(
-        '가상 파일 트리에 다음 경로가 없습니다.\n' +
-          missing.map((p) => `· ${p}`).join('\n') +
-          '\n\n"동기화" 버튼으로 정합성을 맞출 수 있습니다. (실제 파일 생성 없음)'
-      )
-    }
-  }
-
-  function handleSync() {
-    if (!projectId) return
-    syncCommonResourcesToFileTree(projectId)
-    alert('가상 파일 트리(components/commonFiles/fileTree) 정합성을 맞춰 두었습니다. 실제 파일은 생성되지 않습니다.')
+  function handleResetToDefault() {
+    alert(
+      '기본 파일 구조(WebContent/ ├ css/ ├ js/ ├ img/ └ index.html)로 리셋되어 파일 구조가 바뀌며, 파일 및 리소스를 다시 추가해야합니다.'
+    )
+    if (projectId) resetFileTreeToDefault(projectId)
   }
 
   /** fileTree에 새 폴더가 추가되면 해당 폴더도 펼친 상태로 유지 */
@@ -101,12 +54,6 @@ export function FileStructurePage() {
       return new Set([...prev, ...allIds])
     })
   }, [fileTree])
-
-  /** 파일 구조 페이지 진입 시 가상 파일 트리 정합성 유지 (프로젝트/내 템플릿만, 시스템 템플릿은 no-op) */
-  useEffect(() => {
-    if (!projectId) return
-    syncCommonResourcesToFileTree(projectId)
-  }, [projectId, syncCommonResourcesToFileTree])
 
   if (!projectId || !project) {
     navigate('/projects', { replace: true })
@@ -216,15 +163,12 @@ export function FileStructurePage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Button variant="secondary" onClick={handleVerify} title="공통 리소스와 파일 구조 일치 여부 확인">
-            저장된 자료와 확인
-          </Button>
           <Button
-            variant="ghost"
-            onClick={handleSync}
-            title="공통 CSS/JS·에셋 기준으로 파일 트리에 누락된 경로 추가"
+            variant="secondary"
+            onClick={handleResetToDefault}
+            title="파일 구조를 WebContent/css, js, img, index.html 기본 구조로 되돌립니다"
           >
-            동기화
+            기본 파일 구조로 리셋
           </Button>
           {projectId === 'krds' && (
             <Button

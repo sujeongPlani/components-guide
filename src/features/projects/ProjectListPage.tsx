@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGuideStore } from '@/store'
+import { useAuth } from '@/contexts/AuthContext'
 import type { Project } from '@/store/types'
 import { Button } from '@/components/ui/Button'
 
@@ -142,6 +143,7 @@ function ProjectCard({
 
 export function ProjectListPage() {
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
   const projects = useGuideStore((s) => s.projects)
   const getSystemTemplates = useGuideStore((s) => s.getSystemTemplates)
   const addProject = useGuideStore((s) => s.addProject)
@@ -270,11 +272,30 @@ export function ProjectListPage() {
     setEditingProjectId(null)
   }
 
+  async function handleLogout() {
+    await logout()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <div style={{ minHeight: '100vh', padding: 48, background: 'var(--color-bg)' }}>
-      <header style={{ marginBottom: 32, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+      <header className="lg-project-list-header" style={{ marginBottom: 32, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700 }}>프로젝트</h1>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          {user?.username && (
+            <span className="lg-project-list-username" aria-hidden>
+              {user.username}
+            </span>
+          )}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleLogout}
+            aria-label="로그아웃"
+            className="lg-logout-btn"
+          >
+            로그아웃
+          </Button>
           <Button
             variant="primary"
             onClick={() => {

@@ -646,9 +646,30 @@
 .lg-sidebar-project-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 12px;
   position: relative;
+}
+
+.lg-sidebar-app-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--color-primary);
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+
+.lg-sidebar-app-logo:hover {
+  color: var(--color-primary);
+  background: rgba(37, 99, 235, 0.08);
 }
 
 .lg-sidebar-project-name {
@@ -658,20 +679,16 @@
   background: none;
   font-size: 22px;
   font-weight: 700;
-  cursor: pointer;
   text-align: left;
   border-radius: var(--radius);
   min-width: 0;
   font-family: inherit;
   color: var(--color-text);
+  cursor: default;
 }
 
-.lg-sidebar-project-name:hover {
-  background: rgba(37, 99, 235, 0.06);
-}
-
-.lg-sidebar-project-name--link {
-  color: var(--color-primary);
+.lg-sidebar-app-logo + .lg-sidebar-project-name:hover {
+  background: none;
 }
 
 .lg-sidebar-settings-btn {
@@ -950,9 +967,8 @@
 }
 
 .lg-files-tree-wrap {
-  width: 420px;
-  min-width: 360px;
-  flex: 0 0 420px;
+  flex:1;
+  min-width: 420px;
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
@@ -1999,4 +2015,199 @@
 /* Sidebar: cursor when editing categories */
 .lg-sidebar-cat-item--editing {
   cursor: grab;
+}
+
+/* ========== 로그인 페이지 (KRDS 스타일 관리자 로그인) ========== */
+.lg-login-page {
+  --lg-login-primary: #1e3a5f;
+  --lg-login-primary-hover: #152a47;
+  --lg-login-bg: #f5f6f8;
+  --lg-login-card-bg: #ffffff;
+  --lg-login-border: #e0e2e6;
+  --lg-login-error-bg: #fef2f2;
+  --lg-login-error-text: #b91c1c;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: var(--lg-login-bg);
+}
+
+.lg-login-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 40px 32px;
+  background: var(--lg-login-card-bg);
+  border: 1px solid var(--lg-login-border);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.lg-login-card--loading {
+  text-align: center;
+  padding: 48px 32px;
+}
+
+.lg-login-loading-text {
+  margin: 0;
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+.lg-login-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24px;
+  color: var(--lg-login-primary);
+}
+
+.lg-login-title {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.lg-login-desc {
+  margin: 0 0 28px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.lg-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.lg-login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lg-login-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.lg-login-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 15px;
+  color: var(--color-text);
+  background: var(--lg-login-card-bg);
+  border: 1px solid var(--lg-login-border);
+  border-radius: 6px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.lg-login-input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.85;
+}
+
+.lg-login-input:hover:not(:disabled) {
+  border-color: #c4c8cc;
+}
+
+.lg-login-input:focus {
+  outline: none;
+  border-color: var(--lg-login-primary);
+  box-shadow: 0 0 0 2px rgba(30, 58, 95, 0.15);
+}
+
+.lg-login-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: var(--lg-login-bg);
+}
+
+.lg-login-input[aria-invalid="true"] {
+  border-color: var(--lg-login-error-text);
+}
+
+.lg-login-input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.15);
+}
+
+.lg-login-error {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--lg-login-error-text);
+  background: var(--lg-login-error-bg);
+  border-radius: 6px;
+  border: 1px solid rgba(185, 28, 28, 0.2);
+}
+
+.lg-login-submit {
+  width: 100% !important;
+  margin-top: 4px;
+  padding: 14px 16px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  background: var(--lg-login-primary) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.lg-login-submit:hover:not(:disabled) {
+  background: var(--lg-login-primary-hover) !important;
+}
+
+.lg-login-submit:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .lg-login-page {
+    padding: 16px 12px;
+  }
+  .lg-login-card {
+    padding: 32px 24px;
+  }
+  .lg-login-title {
+    font-size: 20px;
+  }
+  .lg-login-input {
+    padding: 11px 12px;
+    font-size: 16px;
+  }
+}
+
+/* ========== 프로젝트 리스트 헤더 (로그아웃 버튼) ========== */
+.lg-project-list-username {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.lg-logout-btn {
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  padding: 8px 14px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  transition: background 0.15s, border-color 0.15s !important;
+}
+
+.lg-logout-btn:hover {
+  background: rgba(30, 58, 95, 0.06) !important;
+  border-color: #c4c8cc !important;
 }

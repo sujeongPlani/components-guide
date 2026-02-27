@@ -1,3 +1,6 @@
+/* Pretendard - 앱 UI 전용 (컴포넌트 미리보기/사용자 콘텐츠에는 미적용) */
+@import url('./fonts-pretendard.css');
+
 /* 디자인 토큰 */
 :root {
   --color-bg: #fafafa;

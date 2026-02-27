@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useGuideStore } from '@/store'
 import { Button } from '@/components/ui/Button'
+import { AppLogo } from '@/components/AppLogo'
 
 interface SidebarProps {
   projectId: string
@@ -30,7 +31,6 @@ export function Sidebar({
   const removeCategory = useGuideStore((s) => s.removeCategory)
   const reorderCategories = useGuideStore((s) => s.reorderCategories)
   const saveProjectAsTemplate = useGuideStore((s) => s.saveProjectAsTemplate)
-  const resetEditableTemplate = useGuideStore((s) => s.resetEditableTemplate)
   const [editingCategories, setEditingCategories] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [draggedCat, setDraggedCat] = useState<string | null>(null)
@@ -118,11 +118,13 @@ export function Sidebar({
           <button
             type="button"
             onClick={() => navigate('/projects')}
-            className={`lg-sidebar-project-name ${!isGuidePage ? 'lg-sidebar-project-name--link' : ''}`}
+            className="lg-sidebar-app-logo"
             title="프로젝트 목록으로"
+            aria-label="프로젝트 목록으로"
           >
-            {projectName}
+            <AppLogo size={30} />
           </button>
+          <span className="lg-sidebar-project-name">{projectName}</span>
           <button
             type="button"
             onClick={() => setSettingsOpen((v) => !v)}
@@ -269,19 +271,6 @@ export function Sidebar({
               추가
             </Button>
           </div>
-        )}
-        {(projectId === 'krds' || projectId === 'mxds') && (
-          <Button
-            variant="ghost"
-            style={{ width: '100%', fontSize: 14, marginTop: 6, color: 'var(--color-text-muted)' }}
-            onClick={() => {
-              if (!window.confirm('KRDS/MXDS 편집 내용을 초기화하고 시드 데이터로 되돌릴까요? 저장된 편집본이 삭제됩니다.')) return
-              resetEditableTemplate(projectId as 'krds' | 'mxds')
-              window.location.reload()
-            }}
-          >
-            초기화 (시드로 되돌리기)
-          </Button>
         )}
       </div>
       )}

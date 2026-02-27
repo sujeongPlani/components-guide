@@ -5,6 +5,7 @@ import { DEFAULT_CATEGORIES } from './types'
 import { createDefaultFileTree, isProtectedNode, ensureFileUnderFolder, ensureFileUnderFolderById, ensureFolderUnderRoot, findFileInFolder } from '@/lib/fileTree'
 import { getKrdsSeedProject, getMxdsSeedProject } from '@/data/krds-seed'
 import { fetchSystemTemplateJson } from '@/lib/systemTemplates'
+import { fetchProjectsFromSupabase } from '@/lib/supabase'
 
 /** 컴포넌트에서 파생된 commonFiles/fileTree 항목(저장 불필요). 제거·동기화 제외용 */
 const COMP_FILE_REGEX = /^comp-[a-f0-9-]+\.(html|css|js)$/
@@ -365,6 +366,7 @@ interface GuideStore {
   removeProject: (id: string) => void
   updateProjectName: (id: string, name: string) => void
   updateProjectMeta: (id: string, partial: { name?: string; coverImage?: string; participants?: string[]; isBookmarkGuide?: boolean; exportPaths?: ExportPaths; exportPathTree?: ExportPathNode[]; fileTree?: FileNode[] }) => void
+  resetFileTreeToDefault: (projectId: string) => void
   copyFromProjectsIntoProject: (targetProjectId: string, sourceProjectIds: string[]) => void
   addExportPathNode: (projectId: string, node: { name: string; path: string }, parentId?: string) => string
   removeExportPathNode: (projectId: string, nodeId: string) => void
@@ -396,6 +398,8 @@ interface GuideStore {
   addProjectFromTemplate: (templateKind: 'krds' | 'mxds' | string, name: string, options?: { coverImage?: string; participants?: string[] }) => string
   /** 현재 project를 userTemplate으로 복사 저장. 원본 project 유지 */
   saveProjectAsTemplate: (projectId: string, templateName: string) => string
+  /** Supabase에서 프로젝트 목록 불러와서 projects 치환 (env 설정 시에만 사용) */
+  loadProjectsFromSupabase: () => Promise<void>
 }
 
 export type { SystemTemplateMetaOverrides }
@@ -594,6 +598,11 @@ export const useGuideStore = create<GuideStore>()(
         return template.id
       },
 
+      loadProjectsFromSupabase: async () => {
+        const projects = await fetchProjectsFromSupabase()
+        set({ projects })
+      },
+
       removeProject: (id) =>
         set((state) => ({ projects: state.projects.filter((p) => p.id !== id) })),
 
@@ -641,6 +650,20 @@ export const useGuideStore = create<GuideStore>()(
             p.id === id ? { ...p, ...partial } : p
           ),
         })),
+
+      resetFileTreeToDefault: (projectId) =>
+        set((state) => {
+          const defaultTree = createDefaultFileTree()
+          if (projectId === 'krds' || projectId === 'mxds') {
+            const proj = state.editableTemplates?.[projectId]
+            if (!proj) return state
+            return { ...state, editableTemplates: { ...state.editableTemplates, [projectId]: { ...proj, fileTree: defaultTree } } }
+          }
+          return {
+            ...state,
+            projects: state.projects.map((p) => (p.id === projectId ? { ...p, fileTree: defaultTree } : p)),
+          }
+        }),
 
       addExportPathNode: (projectId, node, parentId) => {
         const newNode: ExportPathNode = {
