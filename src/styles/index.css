@@ -35,7 +35,7 @@ html, body {
 /* 라우트/레이아웃이 뷰포트를 채우도록 높이 체인 */
 #root > * {
   height: 100%;
-  min-height: 100%;
+  min-height: 100vh;
 }
 
 body {

@@ -313,11 +313,8 @@ export function ProjectListPage() {
       {/* 1) 기본 템플릿 */}
       <section style={SECTION_STYLE}>
         <h2 style={{ ...SECTION_TITLE_STYLE, fontSize: 20, color: 'var(--color-text)', borderBottom: '2px solid var(--color-primary)', paddingBottom: 8 }}>
-          기본 템플릿
+          Template
         </h2>
-        <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--color-text-muted)' }}>
-          기준 가이드입니다. 이름·설명·커버 이미지는 편집할 수 있으며, 이 템플릿으로 새 프로젝트를 만들 수 있습니다.
-        </p>
         <ul style={CARD_GRID_STYLE}>
           {systemTemplates.map((p, idx) => (
             <ProjectCard
@@ -341,10 +338,7 @@ export function ProjectListPage() {
       {/* 2) 내 템플릿 */}
       {userTemplates.length > 0 && (
         <section style={SECTION_STYLE}>
-          <h2 style={SECTION_TITLE_STYLE}>내 템플릿</h2>
-          <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--color-text-muted)' }}>
-            프로젝트에서 저장한 템플릿입니다. 이름·커버 등 메타를 편집할 수 있으며, 이 템플릿으로 새 프로젝트를 만들 수 있습니다.
-          </p>
+          <h2 style={{ ...SECTION_TITLE_STYLE, fontSize: 20, color: 'var(--color-text)', paddingBottom: 4 }}>My Template</h2>
           <ul style={CARD_GRID_STYLE}>
             {userTemplates.map((p) => (
               <ProjectCard
@@ -367,10 +361,7 @@ export function ProjectListPage() {
 
       {/* 3) 내 프로젝트 */}
       <section style={SECTION_STYLE}>
-        <h2 style={SECTION_TITLE_STYLE}>내 프로젝트</h2>
-        <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--color-text-muted)' }}>
-          직접 작업하는 프로젝트입니다. 편집·삭제·템플릿 저장이 가능합니다.
-        </p>
+        <h2 style={{ ...SECTION_TITLE_STYLE, fontSize: 20, color: 'var(--color-text)', borderBottom: '2px solid var(--color-primary)', paddingBottom: 8 }}>My Project</h2>
         {userProjects.length === 0 ? (
           <div style={{ padding: 48, textAlign: 'center', background: 'var(--color-surface)', borderRadius: 'var(--radius)', border: '1px dashed var(--color-border)' }}>
             <p style={{ margin: '0 0 16px', fontSize: 15, color: 'var(--color-text-muted)' }}>등록된 프로젝트가 없습니다.</p>
